@@ -1,0 +1,41 @@
+package com.dbserver.votacao.model;
+
+import com.dbserver.votacao.model.enums.VotoEnum;
+import java.time.LocalDateTime;
+import jakarta.persistence.*;
+import java.util.UUID;
+import lombok.*;
+
+@Entity
+@Table(name = "voto", uniqueConstraints = {@UniqueConstraint(columnNames = {"pauta_id", "associado_id"}, name = "uk_associado_pauta")})
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class Voto {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "pauta_id", nullable = false)
+    private Pauta pauta;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "associado_id", nullable = false)
+    private Associado associado;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 3)
+    private VotoEnum valor;
+
+    @Column(name = "data_voto", nullable = false, updatable = false)
+    private LocalDateTime dataVoto;
+
+    @PrePersist
+    protected void onCreate() {
+        this.dataVoto = LocalDateTime.now();
+    }
+}
