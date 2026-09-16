@@ -1,4 +1,4 @@
-package com.dbserver.votacao.model;
+package com.dbserver.votacao.domain;
 
 import jakarta.persistence.*;
 import java.util.UUID;

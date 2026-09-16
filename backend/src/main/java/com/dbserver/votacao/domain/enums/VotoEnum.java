@@ -1,4 +1,4 @@
-package com.dbserver.votacao.model.enums;
+package com.dbserver.votacao.domain.enums;
 
 public enum VotoEnum {
     SIM,

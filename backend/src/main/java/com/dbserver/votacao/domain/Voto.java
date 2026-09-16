@@ -1,6 +1,6 @@
-package com.dbserver.votacao.model;
+package com.dbserver.votacao.domain;
 
-import com.dbserver.votacao.model.enums.VotoEnum;
+import com.dbserver.votacao.domain.enums.VotoEnum;
 import java.time.LocalDateTime;
 import jakarta.persistence.*;
 import java.util.UUID;
