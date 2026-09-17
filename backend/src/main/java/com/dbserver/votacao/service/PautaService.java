@@ -5,6 +5,7 @@ import com.dbserver.votacao.domain.enums.VotoEnum;
 import com.dbserver.votacao.dto.request.PautaRequestDto;
 import com.dbserver.votacao.dto.response.PautaResponseDto;
 import com.dbserver.votacao.dto.response.PautaResultadoDto;
+import com.dbserver.votacao.exception.ResourceNotFoundException;
 import com.dbserver.votacao.repository.PautaRepository;
 import com.dbserver.votacao.repository.VotoRepository;
 import lombok.RequiredArgsConstructor;
@@ -44,7 +45,7 @@ public class PautaService {
     public Pauta buscarPorId(UUID id) {
 
         return pautaRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Pauta não encontrada com o ID: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Pauta não encontrada com o ID: " + id));
     }
 
     @Transactional(readOnly = true)
