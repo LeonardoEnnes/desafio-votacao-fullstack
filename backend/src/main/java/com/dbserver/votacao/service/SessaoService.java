@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -46,4 +47,12 @@ public class SessaoService {
         return SessaoResponseDto.fromEntity(sessaoSalva);
     }
 
+    @Transactional(readOnly = true)
+    public List<SessaoResponseDto> listarSessoesAbertas() {
+        LocalDateTime agora = LocalDateTime.now();
+        return sessaoRepository.findByDataAberturaBeforeAndDataFechamentoAfter(agora, agora)
+                .stream()
+                .map(SessaoResponseDto::fromEntity)
+                .toList();
+    }
 }
