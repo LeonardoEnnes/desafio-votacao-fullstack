@@ -21,8 +21,8 @@ public class VotoService {
 
     private final VotoRepository votoRepository;
     private final SessaoRepository sessaoRepository;
-    private final AssociadoRepository associadoRepository;
     private final PautaService pautaService;
+    private final AssociadoService associadoService;
 
     @Transactional
     public VotoResponseDto registrarVoto(UUID pautaId, VotoRequestDto dto) {
@@ -31,17 +31,11 @@ public class VotoService {
         Sessao sessao = sessaoRepository.findByPautaId(pautaId)
                 .orElseThrow(() -> new IllegalStateException("Não existe sessão de votação aberta para esta pauta."));
 
-        LocalDateTime tempoAtual = LocalDateTime.now();
-
-        if (tempoAtual.isAfter(sessao.getDataFechamento())) {
-            String msg = "A sessão de votação já está encerrada.";
-            throw new IllegalStateException(msg);
+        if (LocalDateTime.now().isAfter(sessao.getDataFechamento())) {
+            throw new IllegalStateException("A sessão de votação já está encerrada.");
         }
 
-        Associado associado = associadoRepository.findByCpf(dto.associadoCpf())
-                .orElseGet(() -> associadoRepository.save(
-                        Associado.builder().cpf(dto.associadoCpf()).build()
-                ));
+        Associado associado = associadoService.buscarPorCpf(dto.associadoCpf());
 
         if (votoRepository.existsByPautaIdAndAssociadoId(pautaId, associado.getId())) {
             throw new IllegalStateException("O associado já votou nesta pauta.");
