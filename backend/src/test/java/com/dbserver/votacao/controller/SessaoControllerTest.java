@@ -1,6 +1,7 @@
 package com.dbserver.votacao.controller;
 
 import com.dbserver.votacao.domain.Pauta;
+import com.dbserver.votacao.domain.Sessao;
 import com.dbserver.votacao.dto.request.SessaoRequestDto;
 import com.dbserver.votacao.repository.PautaRepository;
 import com.dbserver.votacao.repository.SessaoRepository;
@@ -17,6 +18,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import java.time.LocalDateTime;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -77,4 +80,24 @@ public class SessaoControllerTest {
 
         assertEquals(1, sessaoRepository.count());
     }
+
+    @Test
+    @DisplayName("GET /api/v1/sessoes/abertas - Deve listar sessões abertas com sucesso")
+    void deveListarSessoesAbertasComSucesso() throws Exception {
+        // abre uma sessao com pauta ja cadastrada
+        Sessao sessao = Sessao.builder()
+                .pauta(pautaCadastrada)
+                .dataAbertura(LocalDateTime.now().minusSeconds(10))
+                .dataFechamento(LocalDateTime.now().plusMinutes(5))
+                .build();
+        sessaoRepository.save(sessao);
+
+        mockMvc.perform(get("/api/v1/sessoes/abertas")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].pautaId").value(pautaCadastrada.getId().toString()))
+                .andDo(print());
+    }
+
 }
