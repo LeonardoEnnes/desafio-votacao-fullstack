@@ -1,4 +1,4 @@
-﻿package com.dbserver.votacao.service;
+package com.dbserver.votacao.service;
 
 import com.dbserver.votacao.domain.Associado;
 import com.dbserver.votacao.domain.Pauta;
@@ -33,9 +33,9 @@ class VotoServiceTest {
     @Mock
     private SessaoRepository sessaoRepository;
     @Mock
-    private AssociadoRepository associadoRepository;
-    @Mock
     private PautaService pautaService;
+    @Mock
+    private AssociadoService associadoService;
 
     @InjectMocks
     private VotoService votoService;
@@ -53,7 +53,7 @@ class VotoServiceTest {
 
         when(pautaService.buscarPorId(pautaId)).thenReturn(pauta);
         when(sessaoRepository.findByPautaId(pautaId)).thenReturn(Optional.of(sessao));
-        when(associadoRepository.findByCpf(cpf)).thenReturn(Optional.of(associado));
+        when(associadoService.buscarPorCpf(cpf)).thenReturn(associado);
         when(votoRepository.existsByPautaIdAndAssociadoId(pautaId, associado.getId())).thenReturn(false);
         when(votoRepository.save(any(Voto.class))).thenAnswer(i -> {
             Voto v = i.getArgument(0);
@@ -101,9 +101,8 @@ class VotoServiceTest {
 
         when(pautaService.buscarPorId(pautaId)).thenReturn(pauta);
         when(sessaoRepository.findByPautaId(pautaId)).thenReturn(Optional.of(sessao));
-        when(associadoRepository.findByCpf(cpf)).thenReturn(Optional.of(associado));
 
-        // Simula que o associado já votou
+        when(associadoService.buscarPorCpf(cpf)).thenReturn(associado);
         when(votoRepository.existsByPautaIdAndAssociadoId(pautaId, associado.getId())).thenReturn(true);
 
         IllegalStateException ex = assertThrows(IllegalStateException.class, () -> votoService.registrarVoto(pautaId, dto));

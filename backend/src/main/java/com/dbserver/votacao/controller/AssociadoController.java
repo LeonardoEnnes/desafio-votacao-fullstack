@@ -1,4 +1,4 @@
-﻿package com.dbserver.votacao.controller;
+package com.dbserver.votacao.controller;
 
 import com.dbserver.votacao.dto.request.AssociadoRequestDto;
 import com.dbserver.votacao.dto.response.AssociadoResponseDto;

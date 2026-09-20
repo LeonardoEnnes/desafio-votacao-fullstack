@@ -1,5 +1,6 @@
-﻿package com.dbserver.votacao.controller;
+package com.dbserver.votacao.controller;
 
+import com.dbserver.votacao.domain.Associado;
 import com.dbserver.votacao.domain.Pauta;
 import com.dbserver.votacao.domain.Sessao;
 import com.dbserver.votacao.domain.enums.VotoEnum;
@@ -59,6 +60,8 @@ class VotoControllerTest {
         sessaoRepository.deleteAll();
         associadoRepository.deleteAll();
         pautaRepository.deleteAll();
+
+        associadoRepository.save(Associado.builder().cpf("12345678901").build());
 
         Pauta pauta = Pauta.builder().titulo("Pauta Votação").descricao("Desc").build();
         pautaAtiva = pautaRepository.save(pauta);

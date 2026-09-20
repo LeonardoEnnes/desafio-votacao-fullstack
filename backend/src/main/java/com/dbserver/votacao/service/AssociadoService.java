@@ -1,4 +1,4 @@
-﻿package com.dbserver.votacao.service;
+package com.dbserver.votacao.service;
 
 import com.dbserver.votacao.domain.Associado;
 import com.dbserver.votacao.dto.request.AssociadoRequestDto;
