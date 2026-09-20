@@ -5,24 +5,22 @@ import com.dbserver.votacao.dto.request.SessaoRequestDto;
 import com.dbserver.votacao.repository.PautaRepository;
 import com.dbserver.votacao.repository.SessaoRepository;
 import com.dbserver.votacao.repository.VotoRepository;
-import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.MediaType;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.json.AutoConfigureJsonTesters;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.json.JacksonTester;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.http.MediaType;
-
+import org.springframework.transaction.annotation.Transactional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.springframework.http.RequestEntity.post;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -52,8 +50,8 @@ public class SessaoControllerTest {
     @BeforeEach
     public void setup() {
         votoRepository.deleteAll();
-        pautaRepository.deleteAll();
         sessaoRepository.deleteAll();
+        pautaRepository.deleteAll();
 
         Pauta pauta = Pauta.builder()
                 .titulo("Pauta Um Sessao")
