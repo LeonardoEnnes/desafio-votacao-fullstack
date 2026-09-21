@@ -1,5 +1,7 @@
 package com.dbserver.votacao.service;
 
+import com.dbserver.votacao.client.ElegibilidadeVoto;
+import com.dbserver.votacao.client.ValidadorCpfExternoClient;
 import com.dbserver.votacao.domain.Associado;
 import com.dbserver.votacao.domain.Pauta;
 import com.dbserver.votacao.domain.Sessao;
@@ -7,7 +9,6 @@ import com.dbserver.votacao.domain.Voto;
 import com.dbserver.votacao.domain.enums.VotoEnum;
 import com.dbserver.votacao.dto.request.VotoRequestDto;
 import com.dbserver.votacao.dto.response.VotoResponseDto;
-import com.dbserver.votacao.repository.AssociadoRepository;
 import com.dbserver.votacao.repository.SessaoRepository;
 import com.dbserver.votacao.repository.VotoRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -36,6 +37,8 @@ class VotoServiceTest {
     private PautaService pautaService;
     @Mock
     private AssociadoService associadoService;
+    @Mock
+    private ValidadorCpfExternoClient validadorCpfExternoClient;
 
     @InjectMocks
     private VotoService votoService;
@@ -55,6 +58,9 @@ class VotoServiceTest {
         when(sessaoRepository.findByPautaId(pautaId)).thenReturn(Optional.of(sessao));
         when(associadoService.buscarPorCpf(cpf)).thenReturn(associado);
         when(votoRepository.existsByPautaIdAndAssociadoId(pautaId, associado.getId())).thenReturn(false);
+
+        when(validadorCpfExternoClient.verificarElegibilidade(cpf)).thenReturn(ElegibilidadeVoto.ABLE_TO_VOTE);
+
         when(votoRepository.save(any(Voto.class))).thenAnswer(i -> {
             Voto v = i.getArgument(0);
             v.setId(UUID.randomUUID());
@@ -77,7 +83,6 @@ class VotoServiceTest {
         VotoRequestDto dto = new VotoRequestDto("12345678901", VotoEnum.SIM);
 
         Pauta pauta = Pauta.builder().id(pautaId).build();
-        // Sessão com data no passado
         Sessao sessao = Sessao.builder().dataFechamento(LocalDateTime.now().minusMinutes(5)).build();
 
         when(pautaService.buscarPorId(pautaId)).thenReturn(pauta);
@@ -101,11 +106,34 @@ class VotoServiceTest {
 
         when(pautaService.buscarPorId(pautaId)).thenReturn(pauta);
         when(sessaoRepository.findByPautaId(pautaId)).thenReturn(Optional.of(sessao));
-
         when(associadoService.buscarPorCpf(cpf)).thenReturn(associado);
         when(votoRepository.existsByPautaIdAndAssociadoId(pautaId, associado.getId())).thenReturn(true);
 
         IllegalStateException ex = assertThrows(IllegalStateException.class, () -> votoService.registrarVoto(pautaId, dto));
         assertEquals("O associado já votou nesta pauta.", ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção se associado não estiver apto a votar (UNABLE_TO_VOTE)")
+    void deveLancarExcecaoAssociadoInapto() {
+        UUID pautaId = UUID.randomUUID();
+        String cpf = "12345678901";
+        VotoRequestDto dto = new VotoRequestDto(cpf, VotoEnum.SIM);
+
+        Pauta pauta = Pauta.builder().id(pautaId).build();
+        Sessao sessao = Sessao.builder().dataFechamento(LocalDateTime.now().plusMinutes(10)).build();
+        Associado associado = Associado.builder().id(UUID.randomUUID()).cpf(cpf).build();
+
+        when(pautaService.buscarPorId(pautaId)).thenReturn(pauta);
+        when(sessaoRepository.findByPautaId(pautaId)).thenReturn(Optional.of(sessao));
+        when(associadoService.buscarPorCpf(cpf)).thenReturn(associado);
+        when(votoRepository.existsByPautaIdAndAssociadoId(pautaId, associado.getId())).thenReturn(false);
+
+        // Simula que o serviço externo retornou que o associado NÃO pode votar
+        when(validadorCpfExternoClient.verificarElegibilidade(cpf)).thenReturn(ElegibilidadeVoto.UNABLE_TO_VOTE);
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class, () -> votoService.registrarVoto(pautaId, dto));
+        assertTrue(ex.getMessage().contains("UNABLE_TO_VOTE"));
+        verify(votoRepository, never()).save(any());
     }
 }
