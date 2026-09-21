@@ -72,14 +72,14 @@ class SessaoServiceTest {
                 .dataFechamento(LocalDateTime.now().plusMinutes(2))
                 .build();
 
-        when(sessaoRepository.findByDataAberturaBeforeAndDataFechamentoAfter(any(LocalDateTime.class), any(LocalDateTime.class)))
+        when(sessaoRepository.findSessoesAbertas(any(LocalDateTime.class)))
                 .thenReturn(List.of(sessaoAberta));
 
         List<SessaoResponseDto> resultado = sessaoService.listarSessoesAbertas();
 
         assertNotNull(resultado);
         assertEquals(1, resultado.size());
-        verify(sessaoRepository, times(1)).findByDataAberturaBeforeAndDataFechamentoAfter(any(), any());
+        verify(sessaoRepository, times(1)).findSessoesAbertas(any());
     }
 
     @Test

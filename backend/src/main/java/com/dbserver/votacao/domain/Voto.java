@@ -7,7 +7,15 @@ import java.util.UUID;
 import lombok.*;
 
 @Entity
-@Table(name = "voto", uniqueConstraints = {@UniqueConstraint(columnNames = {"pauta_id", "associado_id"}, name = "uk_associado_pauta")})
+@Table(
+        name = "voto",
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = {"pauta_id", "associado_id"}, name = "uk_associado_pauta")
+        },
+        indexes = {
+                @Index(name = "idx_voto_associado_id", columnList = "associado_id")
+        }
+)
 @Getter
 @Setter
 @NoArgsConstructor

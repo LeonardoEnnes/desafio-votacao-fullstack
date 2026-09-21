@@ -1,4 +1,4 @@
-﻿package com.dbserver.votacao.client;
+package com.dbserver.votacao.client;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

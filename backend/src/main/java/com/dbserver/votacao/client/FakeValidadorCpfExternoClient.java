@@ -1,4 +1,4 @@
-﻿package com.dbserver.votacao.client;
+package com.dbserver.votacao.client;
 
 import com.dbserver.votacao.exception.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;

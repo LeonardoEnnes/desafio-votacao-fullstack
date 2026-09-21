@@ -1,4 +1,4 @@
-﻿package com.dbserver.votacao.client;
+package com.dbserver.votacao.client;
 
 import org.springframework.stereotype.Component;
 
