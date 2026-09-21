@@ -7,14 +7,16 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { PlusCircle, AlertCircle, UserCheck, IdCard } from 'lucide-react';
+import { PautaCard } from '@/components/layout/PautaCard';
 
 interface Pauta {
     id: string;
+    titulo: string;
     descricao: string;
 }
 
 export function HomePage() {
-    const navigate = useNavigate();
+    // const navigate = useNavigate();
     const [pautas, setPautas] = useState<Pauta[]>([]);
     const [loading, setLoading] = useState(true);
     const [modalAberto, setModalAberto] = useState(false);
@@ -127,6 +129,7 @@ export function HomePage() {
                 </Button>
             </div>
 
+            {/* Pautas */}
             {loading ? (
                 <div className="flex justify-center py-12">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
@@ -140,33 +143,7 @@ export function HomePage() {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {pautas.map((pauta) => (
-                        <Card key={pauta.id} className="hover:shadow-md transition-all duration-200 border-slate-200 flex flex-col justify-between group">
-                            <CardHeader>
-                                <div className="flex justify-between items-start mb-2">
-                                    <Badge variant="outline" className="border-emerald-200 text-emerald-700 bg-emerald-50">
-                                        Pauta
-                                    </Badge>
-                                    <span className="text-xs text-slate-400 font-mono">
-                                        #{pauta.id.split('-')[0]}
-                                    </span>
-                                </div>
-                                <CardTitle className="text-lg font-semibold text-slate-800 line-clamp-2 leading-snug group-hover:text-emerald-700 transition-colors">
-                                    {pauta.descricao}
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <p className="text-sm text-slate-500">Acesse para abrir sessão, registrar seu voto ou conferir a apuração.</p>
-                            </CardContent>
-                            <CardFooter className="pt-0">
-                                <Button 
-                                    onClick={() => navigate(`/pauta/${pauta.id}`)}
-                                    variant="outline"
-                                    className="w-full border-slate-300 hover:bg-slate-50 hover:text-emerald-700"
-                                >
-                                    Acessar Painel
-                                </Button>
-                            </CardFooter>
-                        </Card>
+                        <PautaCard key={pauta.id} pauta={pauta} />
                     ))}
                 </div>
             )}
