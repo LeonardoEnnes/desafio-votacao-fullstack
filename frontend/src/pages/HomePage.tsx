@@ -1,22 +1,25 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { api } from '@/lib/api';
 import { NovaPautaModal } from '@/components/layout/NovaPautaModal';
+import { PautaCard } from '@/components/layout/PautaCard';
+import { SessoesAbertasBanner } from '@/components/layout/SessoesAbertasBanner';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { PlusCircle, AlertCircle, UserCheck, IdCard } from 'lucide-react';
-import { PautaCard } from '@/components/layout/PautaCard';
 
 interface Pauta {
     id: string;
     titulo: string;
     descricao: string;
+    dataCriacao?: string;
+    sessao?: {
+        dataEncerramento: string;
+        aberta: boolean;
+    };
 }
 
 export function HomePage() {
-    // const navigate = useNavigate();
     const [pautas, setPautas] = useState<Pauta[]>([]);
     const [loading, setLoading] = useState(true);
     const [modalAberto, setModalAberto] = useState(false);
@@ -66,6 +69,7 @@ export function HomePage() {
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
+
             <Card className="border-emerald-100 shadow-sm bg-emerald-50/50">
                 <CardContent className="p-6 flex flex-col sm:flex-row items-center justify-between gap-6">
                     <div className="flex items-center gap-4">
@@ -118,6 +122,7 @@ export function HomePage() {
                     </div>
                 </CardContent>
             </Card>
+                        <SessoesAbertasBanner pautasCadastradas={pautas} />
 
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
@@ -129,7 +134,6 @@ export function HomePage() {
                 </Button>
             </div>
 
-            {/* Pautas */}
             {loading ? (
                 <div className="flex justify-center py-12">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
