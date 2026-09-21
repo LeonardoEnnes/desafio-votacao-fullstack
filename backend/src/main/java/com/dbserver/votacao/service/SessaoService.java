@@ -50,7 +50,7 @@ public class SessaoService {
     @Transactional(readOnly = true)
     public List<SessaoResponseDto> listarSessoesAbertas() {
         LocalDateTime agora = LocalDateTime.now();
-        return sessaoRepository.findByDataAberturaBeforeAndDataFechamentoAfter(agora, agora)
+        return sessaoRepository.findSessoesAbertas(agora)
                 .stream()
                 .map(SessaoResponseDto::fromEntity)
                 .toList();
