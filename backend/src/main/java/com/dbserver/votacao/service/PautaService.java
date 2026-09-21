@@ -9,6 +9,7 @@ import com.dbserver.votacao.exception.ResourceNotFoundException;
 import com.dbserver.votacao.repository.PautaRepository;
 import com.dbserver.votacao.repository.VotoRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +18,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PautaService {
 
     private final PautaRepository pautaRepository;
@@ -30,6 +32,7 @@ public class PautaService {
                 .build();
 
         Pauta pautaSalva = pautaRepository.save(pauta);
+        log.info("Nova pauta criada com sucesso. ID: {}, Título: '{}'", pautaSalva.getId(), pautaSalva.getTitulo());
         return PautaResponseDto.fromEntity(pautaSalva);
     }
 
@@ -50,11 +53,15 @@ public class PautaService {
 
     @Transactional(readOnly = true)
     public PautaResultadoDto obterResultadoPauta(UUID pautaId) {
+        log.info("Calculando resultado para a pauta ID: {}", pautaId);
         Pauta pauta = buscarPorId(pautaId);
 
         long totalVotos = votoRepository.countByPautaId(pautaId);
         long totalSim = votoRepository.countByPautaIdAndValor(pautaId, VotoEnum.SIM);
         long totalNao = votoRepository.countByPautaIdAndValor(pautaId, VotoEnum.NAO);
+
+        log.info("Resultado da pauta ID {}: Total de Votos: {} (SIM: {}, NAO: {})",
+                pautaId, totalVotos, totalSim, totalNao);
 
         return new PautaResultadoDto(
                 pauta.getId(),

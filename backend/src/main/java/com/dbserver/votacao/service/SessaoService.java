@@ -6,6 +6,7 @@ import com.dbserver.votacao.dto.request.SessaoRequestDto;
 import com.dbserver.votacao.dto.response.SessaoResponseDto;
 import com.dbserver.votacao.repository.SessaoRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +17,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class SessaoService {
 
     private final SessaoRepository sessaoRepository;
@@ -27,6 +29,7 @@ public class SessaoService {
 
         // validando se ja tem sessao aberta para a pauta
         if (sessaoRepository.existsByPautaId(pautaId)) {
+            log.warn("tentativa de abrir sessao falhou: Ja existe sessao para a pauta ID: {}", pautaId);
             throw new IllegalStateException("Já existe uma sessão de votação cadastrada para esta pauta.");
         }
 
@@ -44,6 +47,7 @@ public class SessaoService {
                 .build();
 
         Sessao sessaoSalva = sessaoRepository.save(sessao);
+        log.info("sessao de votacao aberta com sucesso para a pauta ID: {}. Fechamento em: {}", pautaId, fechamento);
         return SessaoResponseDto.fromEntity(sessaoSalva);
     }
 
