@@ -61,6 +61,7 @@ export function HomePage() {
                             key={pauta.id}
                             pauta={pauta}
                             sessaoAberta={sessoesAbertasIds.includes(pauta.id)}
+                            onVotoRegistrado={recarregar}
                         />
                     ))}
                 </div>
@@ -72,6 +73,7 @@ export function HomePage() {
                     onSuccess={recarregar}
                 />
             )}
+
         </div>
     );
 }

@@ -134,61 +134,7 @@ export function PautaPage() {
                 </CardFooter>
             </Card>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card className="border-slate-200 shadow-sm flex flex-col justify-between">
-                    <CardHeader>
-                        <CardTitle className="text-lg font-semibold text-slate-800">
-                            Terminal de Votação
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-5">
-                        <p className="text-sm text-slate-500">
-                            {sessaoAberta
-                                ? 'Informe seu CPF e selecione sua escolha abaixo. O voto é irreversível.'
-                                : 'A votação está indisponível pois a sessão não está aberta.'}
-                        </p>
-
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">
-                                    CPF do Associado
-                                </label>
-                                <Input
-                                    placeholder="Digite apenas os números do CPF"
-                                    value={cpfVoto}
-                                    onChange={(e) => setCpfVoto(e.target.value.replace(/\D/g, ''))}
-                                    maxLength={11}
-                                    disabled={!sessaoAberta || votando}
-                                    className="bg-white border-slate-300 focus-visible:ring-emerald-600"
-                                />
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <Button
-                                    type="button"
-                                    onClick={() => votar('SIM')}
-                                    disabled={!sessaoAberta || !cpfVoto || votando}
-                                    className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold h-14 text-base gap-2 shadow-sm disabled:opacity-50"
-                                >
-                                    <CheckCircle2 className="w-5 h-5" /> SIM
-                                </Button>
-                                <Button
-                                    type="button"
-                                    onClick={() => votar('NAO')}
-                                    disabled={!sessaoAberta || !cpfVoto || votando}
-                                    className="bg-rose-600 hover:bg-rose-500 text-white font-bold h-14 text-base gap-2 shadow-sm disabled:opacity-50"
-                                >
-                                    <XCircle className="w-5 h-5" /> NÃO
-                                </Button>
-                            </div>
-                            {votando && (
-                                <p className="text-xs text-slate-500 text-center animate-pulse">
-                                    Registrando voto...
-                                </p>
-                            )}
-                        </div>
-                    </CardContent>
-                </Card>
-
+            <div className="space-y-6">
                 <Card className="border-slate-200 shadow-sm">
                     <CardHeader>
                         <CardTitle className="text-lg font-semibold text-slate-800 flex items-center gap-2">
