@@ -1,9 +1,19 @@
 import { api } from '@/lib/api';
-import type { Pauta, ResultadoDto } from '@/types/pauta';
+import type { Pauta, ResultadoDto, SessaoAberta } from '@/types/pauta';
+
+export interface CriarPautaPayload {
+    titulo: string;
+    descricao?: string;
+}
 
 export const pautaService = {
     async listarPautas(): Promise<Pauta[]> {
         const { data } = await api.get('/pautas');
+        return data;
+    },
+
+    async criarPauta(payload: CriarPautaPayload): Promise<Pauta> {
+        const { data } = await api.post('/pautas', payload);
         return data;
     },
 
@@ -17,13 +27,13 @@ export const pautaService = {
         return data;
     },
 
-    async listarSessoesAbertas() {
+    async listarSessoesAbertas(): Promise<SessaoAberta[]> {
         const { data } = await api.get('/sessoes/abertas');
         return data;
     },
 
-    async abrirSessao(pautaId: string, tempoEmMinutos: number) {
+    async abrirSessao(pautaId: string, tempoEmMinutos: number): Promise<SessaoAberta> {
         const { data } = await api.post(`/pautas/${pautaId}/sessoes`, { tempoEmMinutos });
         return data;
-    }
+    },
 };

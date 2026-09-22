@@ -6,6 +6,7 @@ export interface Pauta {
     sessao?: {
         id: string;
         dataEncerramento: string;
+        dataFechamento?: string;
         aberta: boolean;
     };
 }
@@ -18,7 +19,17 @@ export interface ResultadoDto {
     totalVotosNao: number;
 }
 
+export interface SessaoAberta {
+    id: string;
+    pautaId: string;
+    dataAbertura?: string;
+    dataFechamento?: string;
+    dataEncerramento?: string;
+}
+
 export interface Feedback {
     tipo: 'sucesso' | 'erro';
     texto: string;
 }
+
+export type VotoValor = 'SIM' | 'NAO';
