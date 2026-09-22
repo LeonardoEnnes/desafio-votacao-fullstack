@@ -50,7 +50,10 @@ export function PautaCard({ pauta, sessaoAberta, onVotoRegistrado }: PautaCardPr
     }
 
     return (
-        <Card className="hover:shadow-md transition-all duration-200 border-slate-200 flex flex-col h-full group">
+        <Card
+            id={`pauta-${pauta.id}`}
+            className="scroll-mt-24 hover:shadow-md transition-all duration-200 border-slate-200 flex flex-col h-full group"
+        >
             <CardHeader className="pb-2 flex flex-col gap-2">
                 <div className="flex justify-between items-center">
                     <Badge
