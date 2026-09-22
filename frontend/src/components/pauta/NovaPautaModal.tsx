@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { NovaPautaForm } from '@/components/layout/forms/NovaPautaForm';
+import { NovaPautaForm } from '@/components/pauta/forms/NovaPautaForm';
 
 interface NovaPautaModalProps {
     onClose: () => void;

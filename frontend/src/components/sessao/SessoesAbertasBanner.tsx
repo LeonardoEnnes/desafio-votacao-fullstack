@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { pautaService } from '@/services/pautaService';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Radio, ArrowRight, Clock, AlertCircle, ArrowDown } from 'lucide-react';
+import { Radio, Clock, AlertCircle, ArrowDown } from 'lucide-react';
 import type { Pauta, SessaoAberta } from '@/types/pauta';
 
 interface BannerProps {
@@ -62,7 +62,6 @@ export function SessoesAbertasBanner({ pautasCadastradas }: BannerProps) {
 
         el.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-        // Highlight temporário
         el.classList.add('ring-2', 'ring-emerald-400', 'ring-offset-2', 'transition-all');
         setTimeout(() => {
             el.classList.remove('ring-2', 'ring-emerald-400', 'ring-offset-2');

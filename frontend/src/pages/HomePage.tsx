@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { PlusCircle, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { AreaAssociado } from '@/components/layout/AreaAssociado';
-import { SessoesAbertasBanner } from '@/components/layout/SessoesAbertasBanner';
-import { PautaCard } from '@/components/layout/PautaCard';
-import { NovaPautaModal } from '@/components/layout/NovaPautaModal';
+import { AreaAssociado } from '@/components/associado/AreaAssociado';
+import { SessoesAbertasBanner } from '@/components/sessao/SessoesAbertasBanner';
+import { PautaVotacaoCard } from '@/components/voto/VotacaoCard';
+import { NovaPautaModal } from '@/components/pauta/NovaPautaModal';
 import { usePautasComSessoes } from '@/hooks/usePautasComSessoes';
 
 export function HomePage() {
@@ -23,7 +23,7 @@ export function HomePage() {
                         Pautas de Votação
                     </h2>
                     <p className="text-sm text-slate-500 mt-1">
-                        Selecione uma pauta para visualizar os detalhes ou votar.
+                        Selecione uma pauta para gerenciar a sessão ou vote diretamente nos cards ativos.
                     </p>
                 </div>
                 <Button
@@ -57,11 +57,11 @@ export function HomePage() {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {pautas.map((pauta) => (
-                        <PautaCard
+                        <PautaVotacaoCard
                             key={pauta.id}
                             pauta={pauta}
                             sessaoAberta={sessoesAbertasIds.includes(pauta.id)}
-                            onVotoRegistrado={recarregar}
+                            onVotoRealizado={recarregar}
                         />
                     ))}
                 </div>
@@ -73,7 +73,6 @@ export function HomePage() {
                     onSuccess={recarregar}
                 />
             )}
-
         </div>
     );
 }
