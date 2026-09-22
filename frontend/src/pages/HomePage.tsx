@@ -3,24 +3,16 @@ import { api } from '@/lib/api';
 import { NovaPautaModal } from '@/components/layout/NovaPautaModal';
 import { PautaCard } from '@/components/layout/PautaCard';
 import { SessoesAbertasBanner } from '@/components/layout/SessoesAbertasBanner';
+import { useSessoesAbertas } from '@/hooks/useSessoesAbertas'; // Se tiver criado o hook, ou use o array direto
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { PlusCircle, AlertCircle, UserCheck, IdCard } from 'lucide-react';
-
-interface Pauta {
-    id: string;
-    titulo: string;
-    descricao: string;
-    dataCriacao?: string;
-    sessao?: {
-        dataEncerramento: string;
-        aberta: boolean;
-    };
-}
+import type { Pauta } from '@/types/pauta'; // Importação correta do tipo global
 
 export function HomePage() {
     const [pautas, setPautas] = useState<Pauta[]>([]);
+    const [sessoesAbertasIds, setSessoesAbertasIds] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
     const [modalAberto, setModalAberto] = useState(false);
 
@@ -28,17 +20,26 @@ export function HomePage() {
     const [associadoCpf, setAssociadoCpf] = useState(localStorage.getItem('@votacao:cpf') || '');
     const [erroCpf, setErroCpf] = useState('');
 
+    const mascararCpf = (cpf: string) => {
+        if (!cpf || cpf.length !== 11) return '***.***.***-**';
+        return `***.***.${cpf.slice(6, 9)}-${cpf.slice(9, 11)}`;
+    };
+
     useEffect(() => {
-        carregarPautas();
+        carregarDados();
     }, []);
 
-    async function carregarPautas() {
+    async function carregarDados() {
         try {
             setLoading(true);
-            const response = await api.get('/pautas');
-            setPautas(response.data);
+            const [resPautas, resSessoes] = await Promise.all([
+                api.get('/pautas'),
+                api.get('/sessoes/abertas').catch(() => ({ data: [] }))
+            ]);
+            setPautas(resPautas.data);
+            setSessoesAbertasIds(resSessoes.data.map((s: any) => s.pautaId));
         } catch (error) {
-            console.error('Erro ao buscar pautas:', error);
+            console.error('Erro ao buscar dados:', error);
         } finally {
             setLoading(false);
         }
@@ -69,7 +70,6 @@ export function HomePage() {
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
-
             <Card className="border-emerald-100 shadow-sm bg-emerald-50/50">
                 <CardContent className="p-6 flex flex-col sm:flex-row items-center justify-between gap-6">
                     <div className="flex items-center gap-4">
@@ -89,7 +89,7 @@ export function HomePage() {
                             <div className="flex items-center justify-between sm:justify-start gap-4 bg-white px-4 py-2 border border-emerald-200 rounded-lg shadow-sm">
                                 <div className="flex items-center gap-2">
                                     <UserCheck className="w-5 h-5 text-emerald-600" />
-                                    <span className="text-sm font-medium text-slate-700">CPF: {associadoCpf}</span>
+                                    CPF logado: {mascararCpf(associadoCpf)}
                                 </div>
                                 <Button 
                                     variant="ghost" 
@@ -122,7 +122,8 @@ export function HomePage() {
                     </div>
                 </CardContent>
             </Card>
-                        <SessoesAbertasBanner pautasCadastradas={pautas} />
+
+            <SessoesAbertasBanner pautasCadastradas={pautas} />
 
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
@@ -147,7 +148,11 @@ export function HomePage() {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {pautas.map((pauta) => (
-                        <PautaCard key={pauta.id} pauta={pauta} />
+                        <PautaCard 
+                            key={pauta.id} 
+                            pauta={pauta} 
+                            sessaoAberta={sessoesAbertasIds.includes(pauta.id)} 
+                        />
                     ))}
                 </div>
             )}
@@ -155,7 +160,7 @@ export function HomePage() {
             {modalAberto && (
                 <NovaPautaModal 
                     onClose={() => setModalAberto(false)} 
-                    onSuccess={carregarPautas} 
+                    onSuccess={carregarDados} 
                 />
             )}
         </div>
