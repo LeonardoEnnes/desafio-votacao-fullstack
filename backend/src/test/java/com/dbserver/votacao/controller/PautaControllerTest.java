@@ -160,6 +160,7 @@ class PautaControllerTest {
 
         mockMvc.perform(get("/api/v1/pautas/{id}/resultado", pauta.getId()))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalVotos").value(1))
                 .andExpect(jsonPath("$.totalVotosSim").value(1))
                 .andExpect(jsonPath("$.totalVotosNao").value(0));
     }
@@ -176,9 +177,56 @@ class PautaControllerTest {
 
         mockMvc.perform(get("/api/v1/pautas/{id}/resultado", pauta.getId()))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalVotos").value(0))
                 .andExpect(jsonPath("$.totalVotosSim").value(0))
                 .andExpect(jsonPath("$.totalVotosNao").value(0));
     }
+
+    @Test
+    @DisplayName("Deve calcular corretamente votos SIM e NÃO")
+    void deveCalcularVotosSimENao() throws Exception {
+        Pauta pauta = pautaRepository.save(
+                Pauta.builder()
+                        .titulo("Pauta Resultado")
+                        .descricao("Descricao")
+                        .build()
+        );
+
+        Associado associado1 = associadoRepository.save(
+                Associado.builder()
+                        .cpf("52998224725")
+                        .build()
+        );
+
+        Associado associado2 = associadoRepository.save(
+                Associado.builder()
+                        .cpf("12345678909")
+                        .build()
+        );
+
+        votoRepository.save(
+                Voto.builder()
+                        .pauta(pauta)
+                        .associado(associado1)
+                        .valor(VotoEnum.SIM)
+                        .build()
+        );
+
+        votoRepository.save(
+                Voto.builder()
+                        .pauta(pauta)
+                        .associado(associado2)
+                        .valor(VotoEnum.NAO)
+                        .build()
+        );
+
+        mockMvc.perform(get("/api/v1/pautas/{id}/resultado", pauta.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalVotos").value(2))
+                .andExpect(jsonPath("$.totalVotosSim").value(1))
+                .andExpect(jsonPath("$.totalVotosNao").value(1));
+    }
+
 
     @Test
     @DisplayName("Deve retornar lista vazia quando não houver pautas")
@@ -240,6 +288,80 @@ class PautaControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("Deve retornar 400 quando título tiver menos de 3 caracteres")
+    void deveRetornarBadRequestTituloCurto() throws Exception {
+        PautaRequestDto request =
+                new PautaRequestDto("ab", "Descricao válida");
+
+        mockMvc.perform(post("/api/v1/pautas")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(pautaRequestTester.write(request).getJson()))
+                .andExpect(status().isBadRequest());
+
+        assertEquals(0, pautaRepository.count());
+    }
+
+    @Test
+    @DisplayName("Deve retornar 400 quando título ultrapassar 255 caracteres")
+    void deveRetornarBadRequestTituloLongo() throws Exception {
+        String titulo = "a".repeat(256);
+
+        PautaRequestDto request =
+                new PautaRequestDto(titulo, "Descricao válida");
+
+        mockMvc.perform(post("/api/v1/pautas")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(pautaRequestTester.write(request).getJson()))
+                .andExpect(status().isBadRequest());
+
+        assertEquals(0, pautaRepository.count());
+    }
+
+    @Test
+    @DisplayName("Deve retornar 400 quando descrição estiver vazia")
+    void deveRetornarBadRequestDescricaoVazia() throws Exception {
+        PautaRequestDto request =
+                new PautaRequestDto("Pauta válida", "");
+
+        mockMvc.perform(post("/api/v1/pautas")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(pautaRequestTester.write(request).getJson()))
+                .andExpect(status().isBadRequest());
+
+        assertEquals(0, pautaRepository.count());
+    }
+
+    @Test
+    @DisplayName("Deve retornar 400 quando descrição tiver menos de 3 caracteres")
+    void deveRetornarBadRequestDescricaoCurta() throws Exception {
+        PautaRequestDto request =
+                new PautaRequestDto("Pauta válida", "ab");
+
+        mockMvc.perform(post("/api/v1/pautas")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(pautaRequestTester.write(request).getJson()))
+                .andExpect(status().isBadRequest());
+
+        assertEquals(0, pautaRepository.count());
+    }
+
+    @Test
+    @DisplayName("Deve retornar 400 quando descrição ultrapassar 500 caracteres")
+    void deveRetornarBadRequestDescricaoLonga() throws Exception {
+        String descricao = "a".repeat(501);
+
+        PautaRequestDto request =
+                new PautaRequestDto("Pauta válida", descricao);
+
+        mockMvc.perform(post("/api/v1/pautas")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(pautaRequestTester.write(request).getJson()))
+                .andExpect(status().isBadRequest());
+
+        assertEquals(0, pautaRepository.count());
     }
 
 }
