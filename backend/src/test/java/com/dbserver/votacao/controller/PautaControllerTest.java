@@ -1,7 +1,11 @@
 package com.dbserver.votacao.controller;
 
+import com.dbserver.votacao.domain.Associado;
 import com.dbserver.votacao.domain.Pauta;
+import com.dbserver.votacao.domain.Voto;
+import com.dbserver.votacao.domain.enums.VotoEnum;
 import com.dbserver.votacao.dto.request.PautaRequestDto;
+import com.dbserver.votacao.repository.AssociadoRepository;
 import com.dbserver.votacao.repository.PautaRepository;
 import com.dbserver.votacao.repository.VotoRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,10 +47,14 @@ class PautaControllerTest {
     @Autowired
     private VotoRepository votoRepository;
 
+    @Autowired
+    private AssociadoRepository associadoRepository;
+
     @BeforeEach
     void setUp() {
         votoRepository.deleteAll();
         pautaRepository.deleteAll();
+        associadoRepository.deleteAll();
     }
 
     @Test
@@ -59,22 +67,20 @@ class PautaControllerTest {
                         .content(pautaRequestTester.write(requestDto).getJson()))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.titulo").value("Titulo da Pauta"))
-                .andExpect(jsonPath("$.descricao").value("Descricao da Pauta"))
-                .andDo(print());
+                .andExpect(jsonPath("$.descricao").value("Descricao da Pauta"));
 
         assertEquals(1, pautaRepository.count());
     }
 
     @Test
     @DisplayName("Deve lancar BadRequest quando titulo for invalido")
-    void deveLancarExceptionTituloNulo() throws Exception {
+    void deveRetornarBadRequestTituloVazio() throws Exception {
         PautaRequestDto requestDto = new PautaRequestDto("", "Descricao");
 
         mockMvc.perform(post("/api/v1/pautas")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(pautaRequestTester.write(requestDto).getJson()))
-                .andExpect(status().isBadRequest())
-                .andDo(print());
+                .andExpect(status().isBadRequest());
 
         assertEquals(0, pautaRepository.count());
     }
@@ -91,8 +97,7 @@ class PautaControllerTest {
         mockMvc.perform(get("/api/v1/pautas"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].titulo").value("Pauta Listada"))
-                .andDo(print());
+                .andExpect(jsonPath("$[0].titulo").value("Pauta Listada"));
     }
 
     @Test
@@ -107,8 +112,7 @@ class PautaControllerTest {
         mockMvc.perform(get("/api/v1/pautas/{id}", pautaSalva.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(pautaSalva.getId().toString()))
-                .andExpect(jsonPath("$.titulo").value("Pauta ID"))
-                .andDo(print());
+                .andExpect(jsonPath("$.titulo").value("Pauta ID"));
     }
 
     @Test
@@ -118,7 +122,124 @@ class PautaControllerTest {
 
         mockMvc.perform(get("/api/v1/pautas/{id}", idInexistente))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.status").value(404))
-                .andDo(print());
+                .andExpect(jsonPath("$.status").value(404));
     }
+
+    @Test
+    @DisplayName("Deve retornar 404 ao buscar resultado de pauta inexistente")
+    void deveRetornarNotFoundAoBuscarResultadoPautaInexistente() throws Exception {
+        UUID idInexistente = UUID.randomUUID();
+
+        mockMvc.perform(get("/api/v1/pautas/{id}/resultado", idInexistente))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("Deve retornar resultado da pauta")
+    void deveRetornarResultadoDaPauta() throws Exception {
+        Pauta pauta = Pauta.builder()
+                .titulo("Pauta Resultado")
+                .descricao("Desc")
+                .build();
+
+        pauta = pautaRepository.save(pauta);
+
+        Associado associado = associadoRepository.save(
+                Associado.builder()
+                        .cpf("52998224725")
+                        .build()
+        );
+
+        votoRepository.save(
+                Voto.builder()
+                        .pauta(pauta)
+                        .associado(associado)
+                        .valor(VotoEnum.SIM)
+                        .build()
+        );
+
+        mockMvc.perform(get("/api/v1/pautas/{id}/resultado", pauta.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalVotosSim").value(1))
+                .andExpect(jsonPath("$.totalVotosNao").value(0));
+    }
+
+    @Test
+    @DisplayName("Deve retornar resultado zerado quando pauta não possuir votos")
+    void deveRetornarResultadoSemVotos() throws Exception {
+        Pauta pauta = Pauta.builder()
+                .titulo("Pauta Sem Votos")
+                .descricao("Desc")
+                .build();
+
+        pauta = pautaRepository.save(pauta);
+
+        mockMvc.perform(get("/api/v1/pautas/{id}/resultado", pauta.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalVotosSim").value(0))
+                .andExpect(jsonPath("$.totalVotosNao").value(0));
+    }
+
+    @Test
+    @DisplayName("Deve retornar lista vazia quando não houver pautas")
+    void deveRetornarListaVaziaQuandoNaoHouverPautas() throws Exception {
+        mockMvc.perform(get("/api/v1/pautas"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+    }
+
+    @Test
+    @DisplayName("Deve retornar 400 quando título for nulo")
+    void deveRetornarBadRequestTituloNulo() throws Exception {
+        String json = """
+        {
+            "titulo": null,
+            "descricao": "Descricao"
+        }
+        """;
+
+        mockMvc.perform(post("/api/v1/pautas")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("Deve retornar 400 quando título não for informado")
+    void deveRetornarBadRequestTituloAusente() throws Exception {
+        String json = """
+        {
+            "descricao": "Descricao"
+        }
+        """;
+
+        mockMvc.perform(post("/api/v1/pautas")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("Deve retornar 400 quando body estiver vazio")
+    void deveRetornarBadRequestBodyVazio() throws Exception {
+        mockMvc.perform(post("/api/v1/pautas")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("Deve retornar 400 quando JSON for inválido")
+    void deveRetornarBadRequestJsonInvalido() throws Exception {
+        String json = """
+        {
+            "titulo": "Pauta",
+            "descricao": "Descricao"
+        """;
+
+        mockMvc.perform(post("/api/v1/pautas")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isBadRequest());
+    }
+
 }
