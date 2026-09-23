@@ -43,41 +43,48 @@ class AssociadoControllerTest {
     }
 
     @Test
-    @DisplayName("POST /api/v1/associados - Deve cadastrar associado com sucesso")
+    @DisplayName("deve cadastrar associado com sucesso")
     void deveCadastrarAssociado() throws Exception {
-        AssociadoRequestDto request = new AssociadoRequestDto("12345678901");
+        AssociadoRequestDto request =
+                new AssociadoRequestDto("12345678901");
 
         mockMvc.perform(post("/api/v1/associados")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(associadoRequestTester.write(request).getJson()))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.cpf").value("12345678901"))
-                .andExpect(jsonPath("$.uuid").exists())
-                .andDo(print());
+                .andExpect(jsonPath("$.uuid").isString())
+                .andExpect(jsonPath("$.uuid").isNotEmpty());
 
         assertEquals(1, associadoRepository.count());
     }
 
     @Test
-    @DisplayName("POST /api/v1/associados - Deve retornar 409 Conflict se CPF já existir")
-    void deveRetornarConflictCpfDuplicado() throws Exception {
-        AssociadoRequestDto request = new AssociadoRequestDto("12345678901");
+    @DisplayName("não deve criar associado quando CPF já estiver cadastrado")
+    void naoDeveCriarAssociadoCpfDuplicado() throws Exception {
+        associadoRepository.save(
+                Associado.builder()
+                        .cpf("12345678901")
+                        .build()
+        );
 
-        // Cadastra direto no banco para simular duplicidade
-        associadoRepository.save(Associado.builder().cpf("12345678901").build());
+        AssociadoRequestDto request =
+                new AssociadoRequestDto("12345678901");
 
         mockMvc.perform(post("/api/v1/associados")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(associadoRequestTester.write(request).getJson()))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.message").value("Associado já cadastrado com este CPF."))
-                .andDo(print());
+                .andExpect(jsonPath("$.message")
+                        .value("Associado já cadastrado com este CPF."));
+
+        assertEquals(1, associadoRepository.count());
     }
 
+
     @Test
-    @DisplayName("POST /api/v1/associados - Deve retornar 400 Bad Request se CPF for inválido")
+    @DisplayName("deve retornar 400 Bad Request se CPF for invalido")
     void deveRetornarBadRequestCpfInvalido() throws Exception {
-        // CPF com letras (deve ter 11 dígitos numéricos)
         AssociadoRequestDto request = new AssociadoRequestDto("123456789XX");
 
         mockMvc.perform(post("/api/v1/associados")
@@ -87,4 +94,121 @@ class AssociadoControllerTest {
                 .andExpect(jsonPath("$.messages.cpf").exists())
                 .andDo(print());
     }
+
+    @Test
+    @DisplayName("deve retornar 400 quando CPF possuir caracteres especiais")
+    void deveRetornarBadRequestCpfComCaracteresEspeciais() throws Exception {
+        AssociadoRequestDto request =
+                new AssociadoRequestDto("123.456.789-01");
+
+        mockMvc.perform(post("/api/v1/associados")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(associadoRequestTester.write(request).getJson()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.messages.cpf").exists());
+    }
+
+    @Test
+    @DisplayName("Deve retornar 400 se CPF estiver vazio")
+    void deveRetornarBadRequestCpfVazio() throws Exception {
+        AssociadoRequestDto request = new AssociadoRequestDto("");
+
+        mockMvc.perform(post("/api/v1/associados")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(associadoRequestTester.write(request).getJson()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.messages.cpf").exists());
+    }
+
+    @Test
+    @DisplayName("deve retornar 400 se CPF tiver menos de 11 dígitos")
+    void deveRetornarBadRequestCpfCurto() throws Exception {
+        AssociadoRequestDto request = new AssociadoRequestDto("123456789"); // cpf curto
+
+        mockMvc.perform(post("/api/v1/associados")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(associadoRequestTester.write(request).getJson()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.messages.cpf").exists());
+    }
+
+    @Test
+    @DisplayName("deve retornar 400 se CPF for nulo")
+    void deveRetornarBadRequestCpfNulo() throws Exception {
+        String json = """
+            {
+                "cpf": null
+            }
+            """;
+
+        mockMvc.perform(post("/api/v1/associados")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.messages.cpf").exists());
+    }
+
+    @Test
+    @DisplayName("deve retornar 400 se CPF tiver mais de 11 dígitos")
+    void deveRetornarBadRequestCpfLongo() throws Exception {
+        AssociadoRequestDto request =
+                new AssociadoRequestDto("123456789012");
+
+        mockMvc.perform(post("/api/v1/associados")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(associadoRequestTester.write(request).getJson()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.messages.cpf").exists());
+    }
+
+    @Test
+    @DisplayName("deve retornar 400 quando body estiver vazio")
+    void deveRetornarBadRequestBodyVazio() throws Exception {
+        mockMvc.perform(post("/api/v1/associados")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("deve retornar 400 quando JSON for inválido")
+    void deveRetornarBadRequestJsonInvalido() throws Exception {
+        String jsonInvalido = """
+        {
+            "cpf": "12345678901"
+        """;
+
+        mockMvc.perform(post("/api/v1/associados")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonInvalido))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("deve retornar 400 quando CPF não for informado")
+    void deveRetornarBadRequestCpfAusente() throws Exception {
+        String json = """
+        {
+        }
+        """;
+
+        mockMvc.perform(post("/api/v1/associados")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.messages.cpf").exists());
+    }
+
+    @Test
+    @DisplayName("deve retornar 400 quando CPF possuir espaços")
+    void deveRetornarBadRequestCpfComEspacos() throws Exception {
+        AssociadoRequestDto request =
+                new AssociadoRequestDto("123 456 789 01");
+
+        mockMvc.perform(post("/api/v1/associados")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(associadoRequestTester.write(request).getJson()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.messages.cpf").exists());
+    }
+
 }
