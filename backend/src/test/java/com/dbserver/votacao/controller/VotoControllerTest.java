@@ -25,11 +25,12 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
+import java.util.UUID;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -74,7 +75,7 @@ class VotoControllerTest {
         when(validadorCpfExternoClient.verificarElegibilidade(anyString()))
                 .thenReturn(ElegibilidadeVoto.ABLE_TO_VOTE);
 
-        associadoRepository.save(Associado.builder().cpf("52998224725").build()); // cpf valido matematicamente
+        associadoRepository.save(Associado.builder().cpf("52998224725").build()); // cpf valido matematicamente -> isso transforma ele como apto para votar
 
         Pauta pauta = Pauta.builder().titulo("Pauta Votação").descricao("Desc").build();
         pautaAtiva = pautaRepository.save(pauta);
@@ -88,7 +89,7 @@ class VotoControllerTest {
     }
 
     @Test
-    @DisplayName("POST /api/v1/pautas/{pautaId}/votos - Deve registrar voto com sucesso")
+    @DisplayName("deve registrar voto com sucesso")
     void deveRegistrarVoto() throws Exception {
         VotoRequestDto request = new VotoRequestDto("52998224725", VotoEnum.SIM);
 
@@ -97,14 +98,29 @@ class VotoControllerTest {
                         .content(votoRequestTester.write(request).getJson()))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.valor").value("SIM"))
-                .andExpect(jsonPath("$.associadoCpf").value("52998224725"))
-                .andDo(print());
+                .andExpect(jsonPath("$.associadoCpf").value("52998224725"));
 
         assertEquals(1, votoRepository.count());
     }
 
     @Test
-    @DisplayName("POST /api/v1/pautas/{pautaId}/votos - Deve retornar 409 se tentar votar duas vezes")
+    @DisplayName("deve registrar voto NAO com sucesso")
+    void deveRegistrarVotoNao() throws Exception {
+        VotoRequestDto request =
+                new VotoRequestDto("52998224725", VotoEnum.NAO);
+
+        mockMvc.perform(post("/api/v1/pautas/{pautaId}/votos", pautaAtiva.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(votoRequestTester.write(request).getJson()))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.valor").value("NAO"))
+                .andExpect(jsonPath("$.associadoCpf").value("52998224725"));
+
+        assertEquals(1, votoRepository.count());
+    }
+
+    @Test
+    @DisplayName("Deve retornar 409 se tentar votar duas vezes")
     void deveRetornarConflictAoVotarDuasVezes() throws Exception {
         VotoRequestDto request = new VotoRequestDto("52998224725", VotoEnum.NAO);
 
@@ -119,12 +135,12 @@ class VotoControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(votoRequestTester.write(request).getJson()))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.message").value("O associado já votou nesta pauta."))
-                .andDo(print());
+                .andExpect(jsonPath("$.message")
+                        .value("O associado já votou nesta pauta."));
     }
 
     @Test
-    @DisplayName("POST /api/v1/pautas/{pautaId}/votos - Deve retornar 400 se CPF for inválido (Validação DTO)")
+    @DisplayName("Deve retornar 400 se CPF for invalido")
     void deveRetornarBadRequestCpfInvalido() throws Exception {
         VotoRequestDto request = new VotoRequestDto("12345ABC890", VotoEnum.SIM);
 
@@ -132,7 +148,120 @@ class VotoControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(votoRequestTester.write(request).getJson()))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.messages.associadoCpf").exists())
-                .andDo(print());
+                .andExpect(jsonPath("$.messages.associadoCpf").exists());
     }
+
+    @Test
+    @DisplayName("deve retornar 400 quando voto for nulo")
+    void deveRetornarBadRequestVotoNulo() throws Exception {
+        UUID pautaId = UUID.randomUUID();
+
+        String json = """
+        {
+            "voto": null
+        }
+        """;
+
+        mockMvc.perform(post("/api/v1/pautas/{pautaId}/votos", pautaId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("deve retornar 400 quando voto for inválido")
+    void deveRetornarBadRequestVotoInvalido() throws Exception {
+        UUID pautaId = UUID.randomUUID();
+
+        String json = """
+        {
+            "voto": "TALVEZ"
+        }
+        """;
+
+        mockMvc.perform(post("/api/v1/pautas/{pautaId}/votos", pautaId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("deve retornar 404 quando pauta não existir")
+    void deveRetornarNotFoundQuandoPautaNaoExistir() throws Exception {
+        UUID pautaId = UUID.randomUUID();
+
+        VotoRequestDto request =
+                new VotoRequestDto("52998224725", VotoEnum.SIM);
+
+        mockMvc.perform(post("/api/v1/pautas/{pautaId}/votos", pautaId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(votoRequestTester.write(request).getJson()))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("deve retornar 404 quando associado não existir")
+    void deveRetornarNotFoundQuandoAssociadoNaoExistir() throws Exception {
+        VotoRequestDto request =
+                new VotoRequestDto("12345678901", VotoEnum.SIM);
+
+        mockMvc.perform(post("/api/v1/pautas/{pautaId}/votos", pautaAtiva.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(votoRequestTester.write(request).getJson()))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("deve retornar 409 quando CPF não estiver apto a votar")
+    void deveRetornarConflictCpfInapto() throws Exception {
+
+        when(validadorCpfExternoClient.verificarElegibilidade("52998224725"))
+                .thenReturn(ElegibilidadeVoto.UNABLE_TO_VOTE);
+
+        VotoRequestDto request =
+                new VotoRequestDto("52998224725", VotoEnum.SIM);
+
+        mockMvc.perform(post("/api/v1/pautas/{pautaId}/votos", pautaAtiva.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(votoRequestTester.write(request).getJson()))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    @DisplayName("deve retornar 409 quando sessão estiver encerrada")
+    void deveRetornarConflictSessaoEncerrada() throws Exception {
+        Sessao sessao = sessaoRepository.findAll()
+                .stream()
+                .findFirst()
+                .orElseThrow();
+
+        sessao.setDataFechamento(LocalDateTime.now().minusMinutes(1));
+        sessaoRepository.save(sessao);
+
+        VotoRequestDto request =
+                new VotoRequestDto("52998224725", VotoEnum.SIM);
+
+        mockMvc.perform(post("/api/v1/pautas/{pautaId}/votos", pautaAtiva.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(votoRequestTester.write(request).getJson()))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    @DisplayName("deve retornar 400 quando CPF estiver vazio")
+    void deveRetornarBadRequestCpfVazio() throws Exception {
+        String json = """
+        {
+            "associadoCpf": "",
+            "voto": "SIM"
+        }
+        """;
+
+        mockMvc.perform(post("/api/v1/pautas/{pautaId}/votos", pautaAtiva.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.messages.associadoCpf").exists());
+    }
+
 }
