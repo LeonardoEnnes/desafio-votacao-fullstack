@@ -17,11 +17,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
-
+import com.dbserver.votacao.exception.ResourceNotFoundException;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -124,16 +123,264 @@ class VotoServiceTest {
         Sessao sessao = Sessao.builder().dataFechamento(LocalDateTime.now().plusMinutes(10)).build();
         Associado associado = Associado.builder().id(UUID.randomUUID()).cpf(cpf).build();
 
-        when(pautaService.buscarPorId(pautaId)).thenReturn(pauta);
-        when(sessaoRepository.findByPautaId(pautaId)).thenReturn(Optional.of(sessao));
-        when(associadoService.buscarPorCpf(cpf)).thenReturn(associado);
+        when(pautaService.buscarPorId(pautaId))
+                .thenReturn(pauta);
+        
+        when(sessaoRepository.findByPautaId(pautaId))
+                .thenReturn(Optional.of(sessao));
+
+        when(associadoService.buscarPorCpf(cpf))
+                .thenReturn(associado);
+
         when(votoRepository.existsByPautaIdAndAssociadoId(pautaId, associado.getId())).thenReturn(false);
 
-        // Simula que o serviço externo retornou que o associado NÃO pode votar
-        when(validadorCpfExternoClient.verificarElegibilidade(cpf)).thenReturn(ElegibilidadeVoto.UNABLE_TO_VOTE);
+        when(validadorCpfExternoClient.verificarElegibilidade(cpf))
+                .thenReturn(ElegibilidadeVoto.UNABLE_TO_VOTE);
 
         IllegalStateException ex = assertThrows(IllegalStateException.class, () -> votoService.registrarVoto(pautaId, dto));
         assertTrue(ex.getMessage().contains("UNABLE_TO_VOTE"));
         verify(votoRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção quando não existir sessão para a pauta")
+    void deveLancarExcecaoQuandoNaoExistirSessao() {
+        UUID pautaId = UUID.randomUUID();
+        String cpf = "12345678901";
+
+        VotoRequestDto dto =
+                new VotoRequestDto(cpf, VotoEnum.SIM);
+
+        Pauta pauta = Pauta.builder()
+                .id(pautaId)
+                .titulo("Pauta Teste")
+                .build();
+
+        when(pautaService.buscarPorId(pautaId)).thenReturn(pauta);
+        when(sessaoRepository.findByPautaId(pautaId)).thenReturn(Optional.empty());
+
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
+                () -> votoService.registrarVoto(pautaId, dto)
+        );
+
+        assertEquals("Não existe sessão de votação aberta para esta pauta.", ex.getMessage());
+        verify(pautaService, times(1)).buscarPorId(pautaId);
+        verify(sessaoRepository, times(1)).findByPautaId(pautaId);
+        verify(associadoService, never()).buscarPorCpf(anyString());
+        verify(validadorCpfExternoClient, never()).verificarElegibilidade(anyString());
+
+        verify(votoRepository, never())
+                .save(any(Voto.class));
+    }
+
+    @Test
+    @DisplayName("Deve propagar exceção quando a pauta não existir")
+    void deveLancarExcecaoQuandoPautaNaoExistir() {
+        UUID pautaId = UUID.randomUUID();
+
+        VotoRequestDto dto =
+                new VotoRequestDto("12345678901", VotoEnum.SIM);
+
+        ResourceNotFoundException excecao =
+                new ResourceNotFoundException("Pauta não encontrada");
+
+        when(pautaService.buscarPorId(pautaId))
+                .thenThrow(excecao);
+
+        ResourceNotFoundException resultado = assertThrows(
+                ResourceNotFoundException.class,
+                () -> votoService.registrarVoto(pautaId, dto)
+        );
+
+        assertEquals(
+                "Pauta não encontrada",
+                resultado.getMessage()
+        );
+
+        verify(pautaService, times(1))
+                .buscarPorId(pautaId);
+
+        verifyNoInteractions(sessaoRepository);
+        verifyNoInteractions(associadoService);
+        verifyNoInteractions(validadorCpfExternoClient);
+        verifyNoInteractions(votoRepository);
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção quando associado não existir")
+    void deveLancarExcecaoQuandoAssociadoNaoExistir() {
+        UUID pautaId = UUID.randomUUID();
+        String cpf = "12345678901";
+
+        VotoRequestDto dto =
+                new VotoRequestDto(cpf, VotoEnum.SIM);
+
+        Pauta pauta = Pauta.builder()
+                .id(pautaId)
+                .titulo("Pauta Teste")
+                .build();
+
+        Sessao sessao = Sessao.builder()
+                .dataFechamento(LocalDateTime.now().plusMinutes(10))
+                .build();
+
+        when(pautaService.buscarPorId(pautaId)).thenReturn(pauta);
+        when(sessaoRepository.findByPautaId(pautaId)).thenReturn(Optional.of(sessao));
+
+        when(associadoService.buscarPorCpf(cpf))
+                .thenThrow(new ResourceNotFoundException(
+                        "Associado não encontrado"
+                ));
+
+        ResourceNotFoundException ex = assertThrows(
+                ResourceNotFoundException.class,
+                () -> votoService.registrarVoto(pautaId, dto)
+        );
+
+        assertEquals(
+                "Associado não encontrado",
+                ex.getMessage()
+        );
+
+        verify(associadoService, times(1)).buscarPorCpf(cpf);
+        verify(votoRepository, never()).existsByPautaIdAndAssociadoId(any(), any());
+        verify(validadorCpfExternoClient, never()).verificarElegibilidade(anyString());
+        verify(votoRepository, never()).save(any(Voto.class));
+    }
+
+    @Test
+    @DisplayName("Não deve consultar elegibilidade quando associado já tiver votado")
+    void naoDeveConsultarElegibilidadeQuandoVotoDuplicado() {
+        UUID pautaId = UUID.randomUUID();
+        String cpf = "12345678901";
+
+        VotoRequestDto dto =
+                new VotoRequestDto(cpf, VotoEnum.SIM);
+
+        Pauta pauta = Pauta.builder()
+                .id(pautaId)
+                .build();
+
+        Sessao sessao = Sessao.builder()
+                .dataFechamento(LocalDateTime.now().plusMinutes(10))
+                .build();
+
+        Associado associado = Associado.builder()
+                .id(UUID.randomUUID())
+                .cpf(cpf)
+                .build();
+
+        when(pautaService.buscarPorId(pautaId)).thenReturn(pauta);
+        when(sessaoRepository.findByPautaId(pautaId)).thenReturn(Optional.of(sessao));
+        when(associadoService.buscarPorCpf(cpf)).thenReturn(associado);
+
+        when(votoRepository.existsByPautaIdAndAssociadoId(
+                pautaId,
+                associado.getId()
+        )).thenReturn(true);
+
+        assertThrows(
+                IllegalStateException.class,
+                () -> votoService.registrarVoto(pautaId, dto)
+        );
+
+        verify(validadorCpfExternoClient, never())
+                .verificarElegibilidade(anyString());
+
+        verify(votoRepository, never())
+                .save(any(Voto.class));
+    }
+
+    @Test
+    @DisplayName("Deve salvar voto com pauta, associado e valor corretos")
+    void deveSalvarVotoComDadosCorretos() {
+        UUID pautaId = UUID.randomUUID();
+        String cpf = "12345678901";
+
+        VotoRequestDto dto =
+                new VotoRequestDto(cpf, VotoEnum.NAO);
+
+        Pauta pauta = Pauta.builder()
+                .id(pautaId)
+                .titulo("Pauta Teste")
+                .build();
+
+        Sessao sessao = Sessao.builder()
+                .dataFechamento(LocalDateTime.now().plusMinutes(10))
+                .build();
+
+        Associado associado = Associado.builder()
+                .id(UUID.randomUUID())
+                .cpf(cpf)
+                .build();
+
+        when(pautaService.buscarPorId(pautaId)).thenReturn(pauta);
+        when(sessaoRepository.findByPautaId(pautaId)).thenReturn(Optional.of(sessao));
+        when(associadoService.buscarPorCpf(cpf)).thenReturn(associado);
+
+        when(votoRepository.existsByPautaIdAndAssociadoId(
+                pautaId,
+                associado.getId()
+        )).thenReturn(false);
+
+        when(validadorCpfExternoClient.verificarElegibilidade(cpf))
+                .thenReturn(ElegibilidadeVoto.ABLE_TO_VOTE);
+
+        when(votoRepository.save(any(Voto.class)))
+                .thenAnswer(invocation -> {
+                    Voto voto = invocation.getArgument(0);
+
+                    voto.setId(UUID.randomUUID());
+                    voto.setDataVoto(LocalDateTime.now());
+
+                    return voto;
+                });
+
+        votoService.registrarVoto(pautaId, dto);
+
+        var captor = org.mockito.ArgumentCaptor.forClass(Voto.class);
+
+        verify(votoRepository).save(captor.capture());
+
+        Voto votoSalvo = captor.getValue();
+
+        assertEquals(pauta, votoSalvo.getPauta());
+        assertEquals(associado, votoSalvo.getAssociado());
+        assertEquals(VotoEnum.NAO, votoSalvo.getValor());
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção quando sessão estiver fechada e não consultar associado")
+    void deveInterromperFluxoQuandoSessaoEstiverFechada() {
+        UUID pautaId = UUID.randomUUID();
+        String cpf = "12345678901";
+
+        VotoRequestDto dto =
+                new VotoRequestDto(cpf, VotoEnum.SIM);
+
+        Pauta pauta = Pauta.builder()
+                .id(pautaId)
+                .build();
+
+        Sessao sessao = Sessao.builder()
+                .dataFechamento(LocalDateTime.now().minusMinutes(1))
+                .build();
+
+        when(pautaService.buscarPorId(pautaId)).thenReturn(pauta);
+        when(sessaoRepository.findByPautaId(pautaId)).thenReturn(Optional.of(sessao));
+
+        assertThrows(
+                IllegalStateException.class,
+                () -> votoService.registrarVoto(pautaId, dto)
+        );
+
+        verify(associadoService, never()).buscarPorCpf(anyString());
+
+        verify(votoRepository, never()).existsByPautaIdAndAssociadoId(any(), any());
+
+        verify(validadorCpfExternoClient, never()).verificarElegibilidade(anyString());
+
+        verify(votoRepository, never()).save(any(Voto.class));
     }
 }
