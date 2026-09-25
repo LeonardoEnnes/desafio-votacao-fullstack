@@ -17,6 +17,24 @@ services:
       timeout: 5s
       retries: 5
 
+  db-perf:
+    image: postgres:16-alpine
+    container_name: votacao_postgres_perf
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: votacao_perf_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_perf_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d votacao_perf_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   api:
     build:
       context: .
@@ -34,5 +52,17 @@ services:
       SPRING_DATASOURCE_PASSWORD: postgres
       SPRING_FLYWAY_ENABLED: "true"
 
+  k6:
+    image: grafana/k6:latest
+    profiles:
+      - performance
+    volumes:
+      - ./performance:/performance:ro
+    environment:
+      BASE_URL: http://host.docker.internal:8080/api/v1
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
 volumes:
   postgres_data:
+  postgres_perf_data:
