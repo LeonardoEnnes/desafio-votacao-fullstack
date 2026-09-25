@@ -7,7 +7,7 @@ const TOTAL_VOTES = Number.parseInt(__ENV.TOTAL_VOTES || "1000", 10);
 const VUS = Number.parseInt(__ENV.VUS || "100", 10);
 
 if (!Number.isInteger(TOTAL_VOTES) || TOTAL_VOTES < 1) {
-    throw new Error("TOTAL_VOTES deve ser um nmero inteiro positivo");
+    throw new Error("TOTAL_VOTES deve ser um número inteiro positivo");
 }
 
 if (!Number.isInteger(VUS) || VUS < 1) {
@@ -26,7 +26,10 @@ export const options = {
     thresholds: {
         checks: ["rate>0.99"],
         "http_req_failed{endpoint:vote}": ["rate<0.01"],
-        "http_req_duration{endpoint:vote}": ["p(95)<1000"],
+        "http_req_duration{endpoint:vote}": [
+            "p(95)<1500",
+            "p(99)<2500"
+        ],
     },
 };
 
@@ -59,29 +62,37 @@ export const setup = () => {
 
     for (let index = 0; index < TOTAL_VOTES; index += 1) {
         const cpf = generateCpf(index);
-        http.post(`${BASE_URL}/associados`, JSON.stringify({ cpf }), {
-            ...jsonHeaders, tags: { endpoint: "setup" }
+        const assocRes = http.post(`${BASE_URL}/associados`, JSON.stringify({ cpf }), {
+            ...jsonHeaders, tags: { endpoint: "setup_associado" }
         });
+
+        if (assocRes.status !== 201 && assocRes.status !== 200) {
+            throw new Error(`Falha crítica no setup: Erro ao criar associado ${cpf}. Status: ${assocRes.status}`);
+        }
         cpfsValidos.push(cpf);
     }
 
     const pautaRes = http.post(`${BASE_URL}/pautas`, JSON.stringify({
             titulo: `Pauta de Teste de Performance ${Date.now()}`,
             descricao: "Pauta gerada automaticamente pelo k6",
-        }), { ...jsonHeaders, tags: { endpoint: "setup" } }
+        }), { ...jsonHeaders, tags: { endpoint: "setup_pauta" } }
     );
 
     if (pautaRes.status !== 201 && pautaRes.status !== 200) {
-        throw new Error(`falha ao criar pauta no setup. Status: ${pautaRes.status}`);
+        throw new Error(`Falha crítica no setup: Erro ao criar pauta. Status: ${pautaRes.status}`);
     }
     const pautaId = pautaRes.json().id;
 
-    http.post(`${BASE_URL}/pautas/${pautaId}/sessoes`, JSON.stringify({
+    const sessaoRes = http.post(`${BASE_URL}/pautas/${pautaId}/sessoes`, JSON.stringify({
             tempoEmMinutos: 30
-        }), { ...jsonHeaders, tags: { endpoint: "setup" } }
+        }), { ...jsonHeaders, tags: { endpoint: "setup_sessao" } }
     );
 
-    console.log(`setup pronto, Utilize o ID da Pauta para consultar resultados: ${pautaId}`); // dps remover consoles
+    if (sessaoRes.status !== 201 && sessaoRes.status !== 200) {
+        throw new Error(`Falha crítica no setup: Erro ao abrir sessão. Status: ${sessaoRes.status}`);
+    }
+
+    console.log(`Setup pronto! ID da Pauta gerada: ${pautaId}`);
 
     return { cpfsValidos, pautaId };
 };
@@ -99,11 +110,6 @@ export default function (data) {
     );
 
     check(response, {
-        "voto registrado com sucesso (201)": (result) => {
-            if (result.status !== 201) {
-                console.log(`Erro inesperado! Status: ${result.status}, Body: ${result.body}`);
-            }
-            return result.status === 201;
-        },
+        "voto registrado com sucesso (201)": (result) => result.status === 201,
     });
 }

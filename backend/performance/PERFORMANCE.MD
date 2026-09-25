@@ -11,7 +11,7 @@ Para rodar os testes de carga com o perfil de performance (`perf`) e o banco de 
 2. **Bombardear a API com Votos :**
 
    ```bash
-   docker compose --profile performance run --rm -e TOTAL_VOTES=1000 -e VUS=100 k6 run /performance/voto-load-test.js
+   docker compose --profile performance run --rm -e TOTAL_VOTES=5000 -e VUS=100 k6 run /performance/voto-load-test.js
    ```
 
    O script do k6 criará automaticamente os associados, a pauta e a sessão de votação no banco de performance.
