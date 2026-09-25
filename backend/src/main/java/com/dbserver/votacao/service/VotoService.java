@@ -10,9 +10,9 @@ import com.dbserver.votacao.dto.request.VotoRequestDto;
 import com.dbserver.votacao.dto.response.VotoResponseDto;
 import com.dbserver.votacao.repository.SessaoRepository;
 import com.dbserver.votacao.repository.VotoRepository;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -28,7 +28,6 @@ public class VotoService {
     private final AssociadoService associadoService;
     private final ValidadorCpfExternoClient validadorCpfExternoClient;
 
-    @Transactional
     public VotoResponseDto registrarVoto(UUID pautaId, VotoRequestDto dto) {
         log.info("iniciando registro de voto na pauta ID: {}", pautaId);
 
@@ -41,23 +40,15 @@ public class VotoService {
                 });
 
         if (LocalDateTime.now().isAfter(sessao.getDataFechamento())) {
-            log.warn("Voto negado: Sessão já encerrada para a pauta ID: {}", pautaId);
             throw new IllegalStateException("A sessão de votação já está encerrada.");
         }
 
-        Associado associado = associadoService.buscarPorCpf(dto.associadoCpf());
-
-        if (votoRepository.existsByPautaIdAndAssociadoId(pautaId, associado.getId())) {
-            log.warn("voto negado: Associado ID {} já votou na pauta ID: {}", associado.getId(), pautaId);
-            throw new IllegalStateException("O associado já votou nesta pauta.");
-        }
-
         ElegibilidadeVoto elegibilidade = validadorCpfExternoClient.verificarElegibilidade(dto.associadoCpf());
-
         if (elegibilidade == ElegibilidadeVoto.UNABLE_TO_VOTE) {
-            log.warn("voto negado: Associado ID {} foi classificado como impedido de votar", associado.getId());
             throw new IllegalStateException("O associado não está apto a votar nesta pauta (UNABLE_TO_VOTE).");
         }
+
+        Associado associado = associadoService.buscarPorCpf(dto.associadoCpf());
 
         Voto voto = Voto.builder()
                 .pauta(pauta)
@@ -65,10 +56,14 @@ public class VotoService {
                 .valor(dto.valor())
                 .build();
 
-        Voto votoSalvo = votoRepository.save(voto);
-        log.info("Voto registrado com sucesso: ID do Voto: {}, Associado ID: {}, Pauta ID: {}", votoSalvo.getId(), associado.getId(), pautaId);
+        try {
+            Voto votoSalvo = votoRepository.saveAndFlush(voto);
+            log.info("Voto registrado com sucesso: ID do Voto: {}", votoSalvo.getId());
+            return VotoResponseDto.fromEntity(votoSalvo);
 
-        return VotoResponseDto.fromEntity(votoSalvo);
+        } catch (DataIntegrityViolationException e) {
+            log.warn("Voto negado por duplicidade estrutural (Constraint): Associado ID {} já votou na pauta ID: {}", associado.getId(), pautaId);
+            throw new IllegalStateException("O associado já votou nesta pauta.");
+        }
     }
-
 }
