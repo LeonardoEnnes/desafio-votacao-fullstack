@@ -37,7 +37,7 @@ services:
 
   api:
     build:
-      context: .
+      context: ./backend
       dockerfile: Dockerfile
     container_name: votacao_api
     restart: always
@@ -47,18 +47,32 @@ services:
       db:
         condition: service_healthy
     environment:
-      # SPRING_PROFILES_ACTIVE: perf
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/votacao_db
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
       SPRING_FLYWAY_ENABLED: "true"
+
+      
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://localhost:8080/api/v1
+    container_name: votacao_frontend
+    restart: always
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
 
   k6:
     image: grafana/k6:latest
     profiles:
       - performance
     volumes:
-      - ./performance:/performance:ro
+      - ./backend/performance:/performance:ro
     environment:
       BASE_URL: http://host.docker.internal:8080/api/v1
     extra_hosts:
