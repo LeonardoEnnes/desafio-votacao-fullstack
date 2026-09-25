@@ -237,7 +237,7 @@ class SessaoServiceTest {
     void deveLancarExcecaoQuandoPautaNaoExistir() {
         UUID pautaId = UUID.randomUUID();
 
-        RuntimeException excecao = new RuntimeException("Pauta nao encontrada");
+        RuntimeException excecao = new RuntimeException("Pauta não encontrada");
 
         when(pautaService.buscarPorId(pautaId)).thenThrow(excecao);
 
