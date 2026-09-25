@@ -26,7 +26,7 @@ export const options = {
     thresholds: {
         checks: ["rate>0.99"],
         "http_req_failed{endpoint:vote}": ["rate<0.01"],
-        "http_req_duration{endpoint:vote}": ["p(95)<1000"], // 95% dos votos em menos de 1s
+        "http_req_duration{endpoint:vote}": ["p(95)<1000"],
     },
 };
 
@@ -99,6 +99,11 @@ export default function (data) {
     );
 
     check(response, {
-        "voto registrado com sucesso (201)": (result) => result.status === 201,
+        "voto registrado com sucesso (201)": (result) => {
+            if (result.status !== 201) {
+                console.log(`Erro inesperado! Status: ${result.status}, Body: ${result.body}`);
+            }
+            return result.status === 201;
+        },
     });
 }
