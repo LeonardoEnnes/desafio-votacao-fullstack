@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { pautaService } from '@/services/pautaService';
 import { votoService } from '@/services/votoService';
+import { getApiErrorMessage } from '@/utils/errorMessages';
 import type { Pauta, ResultadoDto, Feedback, VotoValor } from '@/types/pauta';
 
 export function usePautaDetalhe(id?: string) {
@@ -57,15 +58,11 @@ export function usePautaDetalhe(id?: string) {
             await carregarDados();
         } catch (error: any) {
             const status = error.response?.status;
-            if (status === 409) {
-                setJaTeveSessao(true);
-                setFeedback({
-                    tipo: 'erro',
-                    texto: 'Sessão já realizada e encerrada. Não é possível reabrir.',
-                });
-            } else {
-                setFeedback({ tipo: 'erro', texto: 'Erro ao abrir sessão.' });
-            }
+            if (status === 409) setJaTeveSessao(true);
+            setFeedback({
+                tipo: 'erro',
+                texto: getApiErrorMessage(status, 'Erro ao abrir sessão.'),
+            });
         } finally {
             setAbrindo(false);
         }
@@ -87,14 +84,9 @@ export function usePautaDetalhe(id?: string) {
             setCpfVoto('');
             await carregarDados();
         } catch (error: any) {
-            const status = error.response?.status;
-            const mensagens: Record<number, string> = {
-                404: 'CPF não encontrado ou inválido no sistema.',
-                409: 'Você já votou nesta pauta ou o CPF está inapto a votar.',
-            };
             setFeedback({
                 tipo: 'erro',
-                texto: mensagens[status] ?? 'Erro ao registrar voto.',
+                texto: getApiErrorMessage(error.response?.status, 'Erro ao registrar voto.'),
             });
         } finally {
             setVotando(false);
@@ -102,20 +94,8 @@ export function usePautaDetalhe(id?: string) {
     }
 
     return {
-        pauta,
-        resultado,
-        sessaoAberta,
-        jaTeveSessao,
-        loading,
-        minutosSessao,
-        setMinutosSessao,
-        cpfVoto,
-        setCpfVoto,
-        feedback,
-        votando,
-        abrindo,
-        abrirSessao,
-        votar,
-        recarregar: carregarDados,
+        pauta, resultado, sessaoAberta, jaTeveSessao, loading,
+        minutosSessao, setMinutosSessao, cpfVoto, setCpfVoto,
+        feedback, votando, abrindo, abrirSessao, votar, recarregar: carregarDados,
     };
 }

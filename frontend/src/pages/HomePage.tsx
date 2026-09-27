@@ -3,7 +3,7 @@ import { PlusCircle, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AreaAssociado } from '@/components/associado/AreaAssociado';
 import { SessoesAbertasBanner } from '@/components/sessao/SessoesAbertasBanner';
-import { PautaVotacaoCard } from '@/components/voto/VotacaoCard';
+import { VotacaoCard } from '@/components/voto/VotacaoCard'; // Nome corrigido
 import { NovaPautaModal } from '@/components/pauta/NovaPautaModal';
 import { usePautasComSessoes } from '@/hooks/usePautasComSessoes';
 import { useAuthStore } from '@/stores/authStore';
@@ -16,24 +16,16 @@ export function HomePage() {
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
             <AreaAssociado />
-
             <SessoesAbertasBanner pautasCadastradas={pautas} />
 
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h2 className="text-2xl font-bold tracking-tight text-slate-900">
-                        Pautas de Votação
-                    </h2>
-                    <p className="text-sm text-slate-500 mt-1">
-                        Selecione uma pauta para gerenciar a sessão ou vote diretamente nos cards ativos.
-                    </p>
+                    <h2 className="text-2xl font-bold tracking-tight text-slate-900">Pautas de Votação</h2>
+                    <p className="text-sm text-slate-500 mt-1">Selecione uma pauta para gerenciar a sessão ou vote diretamente nos cards ativos.</p>
                 </div>
                 
                 {cpfLogado && (
-                    <Button
-                        onClick={() => setModalAberto(true)}
-                        className="bg-slate-900 hover:bg-slate-800 text-white"
-                    >
+                    <Button onClick={() => setModalAberto(true)} className="bg-slate-900 hover:bg-slate-800 text-white">
                         <PlusCircle className="w-4 h-4 mr-2" /> Nova Pauta
                     </Button>
                 )}
@@ -52,17 +44,13 @@ export function HomePage() {
             ) : pautas.length === 0 ? (
                 <div className="bg-white rounded-lg border border-slate-200 p-16 text-center shadow-sm">
                     <AlertCircle className="w-12 h-12 text-slate-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-slate-700 mb-1">
-                        Nenhuma pauta cadastrada
-                    </h3>
-                    <p className="text-slate-500">
-                        Crie a primeira pauta para iniciar as deliberações.
-                    </p>
+                    <h3 className="text-lg font-semibold text-slate-700 mb-1">Nenhuma pauta cadastrada</h3>
+                    <p className="text-slate-500">Crie a primeira pauta para iniciar as deliberações.</p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {pautas.map((pauta) => (
-                        <PautaVotacaoCard
+                        <VotacaoCard
                             key={pauta.id}
                             pauta={pauta}
                             sessaoAberta={sessoesAbertasIds.includes(pauta.id)}
@@ -73,10 +61,7 @@ export function HomePage() {
             )}
 
             {modalAberto && (
-                <NovaPautaModal
-                    onClose={() => setModalAberto(false)}
-                    onSuccess={recarregar}
-                />
+                <NovaPautaModal onClose={() => setModalAberto(false)} onSuccess={recarregar} />
             )}
         </div>
     );
