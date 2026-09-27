@@ -61,8 +61,8 @@ export function SessoesAbertasBanner({ pautasCadastradas }: BannerProps) {
         if (!el) return;
 
         el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-        el.classList.add('ring-2', 'ring-emerald-400', 'ring-offset-2', 'transition-all');
+        
+        el.classList.add('ring-2', 'ring-emerald-400', 'transition-all');
         setTimeout(() => {
             el.classList.remove('ring-2', 'ring-emerald-400', 'ring-offset-2');
         }, 1600);

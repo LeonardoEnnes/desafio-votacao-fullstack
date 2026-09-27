@@ -1,5 +1,4 @@
-import { Badge } from '@/components/ui/badge';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Clock } from 'lucide-react';
 import { formatarData } from '@/utils/format';
 import type { Pauta } from '@/types/pauta';
@@ -12,11 +11,8 @@ interface PautaHeaderProps {
 
 export function PautaHeader({ pauta, sessaoAberta, feedback }: PautaHeaderProps) {
     return (
-        <Card className="border-slate-200 shadow-sm">
+        <>
             <CardHeader>
-                <Badge variant="outline" className="w-fit border-emerald-200 text-emerald-700 bg-emerald-50 font-mono mb-2">
-                    ID: {pauta.id}
-                </Badge>
                 <CardTitle className="text-2xl font-bold text-slate-900 leading-tight">
                     {pauta.titulo}
                 </CardTitle>
@@ -62,6 +58,6 @@ export function PautaHeader({ pauta, sessaoAberta, feedback }: PautaHeaderProps)
                     </div>
                 )}
             </CardContent>
-        </Card>
+        </>
     );
 }

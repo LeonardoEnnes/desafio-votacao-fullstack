@@ -39,7 +39,7 @@ export function PautaPage() {
                 <ArrowLeft className="w-4 h-4" /> Voltar para a listagem
             </Button>
 
-            <Card className="border-slate-200 shadow-sm">
+            <Card className="border-slate-200 shadow-sm flex flex-col overflow-hidden">
                 <PautaHeader pauta={pauta} sessaoAberta={sessaoAberta} feedback={feedback} />
                 <SessaoCard 
                     sessaoAberta={sessaoAberta}

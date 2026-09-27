@@ -1,10 +1,9 @@
 import { useState } from 'react';
 import { associadoService } from '@/services/associadoService';
-
-const STORAGE_KEY = '@votacao:cpf';
+import { useAuthStore } from '@/stores/authStore';
 
 export function useIdentificarAssociado() {
-    const [cpf, setCpf] = useState(localStorage.getItem(STORAGE_KEY) ?? '');
+    const { cpfLogado, login, logout } = useAuthStore();
     const [input, setInput] = useState('');
     const [erro, setErro] = useState('');
     const [loading, setLoading] = useState(false);
@@ -22,11 +21,12 @@ export function useIdentificarAssociado() {
         setLoading(true);
         try {
             await associadoService.cadastrar(cpfLimpo);
-            salvar(cpfLimpo);
+            login(cpfLimpo);
+            setInput('');
         } catch (error: any) {
-            // 409 = já cadastrado → considera logado
             if (error.response?.status === 409) {
-                salvar(cpfLimpo);
+                login(cpfLimpo);
+                setInput('');
             } else {
                 setErro('Erro ao validar CPF. Verifique os dados.');
             }
@@ -35,16 +35,5 @@ export function useIdentificarAssociado() {
         }
     }
 
-    function salvar(novoCpf: string) {
-        setCpf(novoCpf);
-        localStorage.setItem(STORAGE_KEY, novoCpf);
-        setInput('');
-    }
-
-    function sair() {
-        setCpf('');
-        localStorage.removeItem(STORAGE_KEY);
-    }
-
-    return { cpf, input, setInput, erro, loading, identificar, sair };
+    return { cpf: cpfLogado, input, setInput, erro, loading, identificar, sair: logout };
 }
