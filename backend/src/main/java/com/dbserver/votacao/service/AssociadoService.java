@@ -1,5 +1,6 @@
 package com.dbserver.votacao.service;
 
+import com.dbserver.votacao.client.ValidadorDeCpf;
 import com.dbserver.votacao.domain.Associado;
 import com.dbserver.votacao.dto.request.AssociadoRequestDto;
 import com.dbserver.votacao.dto.response.AssociadoResponseDto;
@@ -15,9 +16,15 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class AssociadoService {
     private final AssociadoRepository associadoRepository;
+    private final ValidadorDeCpf validadorDeCpf;
 
     @Transactional
     public AssociadoResponseDto cadastrarAssociado(AssociadoRequestDto associadoRequestDto) {
+        if (!validadorDeCpf.isValido(associadoRequestDto.cpf())) {
+            log.warn("tentativa de cadastro falhou: CPF inválido informado: {}", associadoRequestDto.cpf());
+            throw new IllegalArgumentException("CPF inválido.");
+        }
+
         if (associadoRepository.findByCpf(associadoRequestDto.cpf()).isPresent()) {
             log.warn("tentativa de cadastro falhou: Associado ja existe com o CPF informado.");
             throw new IllegalStateException("Associado já cadastrado com este CPF.");
