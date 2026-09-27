@@ -13,6 +13,7 @@ export function usePautaDetalhe(id?: string) {
     const [feedback, setFeedback] = useState<Feedback | null>(null);
     const [votando, setVotando] = useState(false);
     const [abrindo, setAbrindo] = useState(false);
+    const [jaTeveSessao, setJaTeveSessao] = useState(false);
 
     const carregarDados = useCallback(async () => {
         if (!id) return;
@@ -27,6 +28,7 @@ export function usePautaDetalhe(id?: string) {
             setResultado(res);
 
             if (p.sessao) {
+                setJaTeveSessao(true);
                 setSessaoAberta(Boolean(p.sessao.aberta));
             } else {
                 const sessoes = await pautaService.listarSessoesAbertas().catch(() => []);
@@ -51,15 +53,19 @@ export function usePautaDetalhe(id?: string) {
             const minutos = Math.max(1, parseInt(minutosSessao) || 1);
             await pautaService.abrirSessao(id, minutos);
             setFeedback({ tipo: 'sucesso', texto: 'Sessão aberta com sucesso!' });
+            setJaTeveSessao(true);
             await carregarDados();
         } catch (error: any) {
             const status = error.response?.status;
-            setFeedback({
-                tipo: 'erro',
-                texto: status === 409
-                    ? 'Já existe uma sessão aberta para esta pauta.'
-                    : 'Erro ao abrir sessão.',
-            });
+            if (status === 409) {
+                setJaTeveSessao(true);
+                setFeedback({
+                    tipo: 'erro',
+                    texto: 'Sessão já realizada e encerrada. Não é possível reabrir.',
+                });
+            } else {
+                setFeedback({ tipo: 'erro', texto: 'Erro ao abrir sessão.' });
+            }
         } finally {
             setAbrindo(false);
         }
@@ -99,6 +105,7 @@ export function usePautaDetalhe(id?: string) {
         pauta,
         resultado,
         sessaoAberta,
+        jaTeveSessao,
         loading,
         minutosSessao,
         setMinutosSessao,

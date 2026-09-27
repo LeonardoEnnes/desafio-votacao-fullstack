@@ -12,7 +12,7 @@ export function PautaPage() {
     const navigate = useNavigate();
 
     const {
-        pauta, resultado, sessaoAberta, loading,
+        pauta, resultado, sessaoAberta, jaTeveSessao, loading,
         minutosSessao, setMinutosSessao,
         feedback, abrindo, abrirSessao, recarregar,
     } = usePautaDetalhe(id);
@@ -43,6 +43,7 @@ export function PautaPage() {
                 <PautaHeader pauta={pauta} sessaoAberta={sessaoAberta} feedback={feedback} />
                 <SessaoCard 
                     sessaoAberta={sessaoAberta}
+                    jaTeveSessao={jaTeveSessao}
                     minutosSessao={minutosSessao}
                     setMinutosSessao={setMinutosSessao}
                     abrindo={abrindo}
