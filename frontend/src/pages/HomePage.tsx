@@ -6,9 +6,11 @@ import { SessoesAbertasBanner } from '@/components/sessao/SessoesAbertasBanner';
 import { PautaVotacaoCard } from '@/components/voto/VotacaoCard';
 import { NovaPautaModal } from '@/components/pauta/NovaPautaModal';
 import { usePautasComSessoes } from '@/hooks/usePautasComSessoes';
+import { useAuthStore } from '@/stores/authStore';
 
 export function HomePage() {
     const { pautas, sessoesAbertasIds, loading, erro, recarregar } = usePautasComSessoes();
+    const { cpfLogado } = useAuthStore();
     const [modalAberto, setModalAberto] = useState(false);
 
     return (
@@ -26,12 +28,15 @@ export function HomePage() {
                         Selecione uma pauta para gerenciar a sessão ou vote diretamente nos cards ativos.
                     </p>
                 </div>
-                <Button
-                    onClick={() => setModalAberto(true)}
-                    className="bg-slate-900 hover:bg-slate-800 text-white"
-                >
-                    <PlusCircle className="w-4 h-4 mr-2" /> Nova Pauta
-                </Button>
+                
+                {cpfLogado && (
+                    <Button
+                        onClick={() => setModalAberto(true)}
+                        className="bg-slate-900 hover:bg-slate-800 text-white"
+                    >
+                        <PlusCircle className="w-4 h-4 mr-2" /> Nova Pauta
+                    </Button>
+                )}
             </div>
 
             {loading ? (

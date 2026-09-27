@@ -6,7 +6,6 @@ import { calcularPercentuais, formatarData } from '@/utils/format';
 import { useAuthStore } from '@/stores/authStore';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Calendar, BarChart2, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 import type { Pauta, ResultadoDto } from '@/types/pauta';
 
@@ -70,9 +69,6 @@ export function PautaVotacaoCard({ pauta, sessaoAberta, onVotoRealizado }: Pauta
         <Card className="hover:shadow-md transition-all duration-200 border-slate-200 flex flex-col h-full group">
             <CardHeader className="pb-2 flex flex-col gap-2">
                 <div className="flex justify-between items-center">
-                    <Badge variant="outline" className="border-emerald-200 text-emerald-700 bg-emerald-50 text-xs">
-                        Pauta
-                    </Badge>
                     {sessaoAberta ? (
                         <span className="text-[10px] font-semibold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full flex items-center gap-1">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span>
@@ -172,7 +168,7 @@ export function PautaVotacaoCard({ pauta, sessaoAberta, onVotoRealizado }: Pauta
                     variant="outline"
                     className="w-full border-slate-300 hover:bg-slate-50 hover:text-emerald-700 text-xs font-medium h-8"
                 >
-                    Gerir Sessão & Detalhes
+                    Gerir Sessão
                 </Button>
             </CardFooter>
         </Card>
