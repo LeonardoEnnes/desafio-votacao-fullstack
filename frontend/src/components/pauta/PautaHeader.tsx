@@ -1,6 +1,6 @@
 import { CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Clock } from 'lucide-react';
-import { formatarData } from '@/utils/format';
+import { formatarData } from '@/utils/date';
 import type { Pauta } from '@/types/pauta';
 
 interface PautaHeaderProps {

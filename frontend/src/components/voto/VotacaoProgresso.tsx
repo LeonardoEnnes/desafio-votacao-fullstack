@@ -1,5 +1,5 @@
 import { BarChart2 } from 'lucide-react';
-import { calcularPercentuais } from '@/utils/format';
+import { calcularPercentuais } from '@/utils/votacao';
 import type { ResultadoDto } from '@/types/pauta';
 
 interface VotacaoProgressoProps {

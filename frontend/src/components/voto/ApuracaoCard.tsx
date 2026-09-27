@@ -2,8 +2,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { BarChart3 } from 'lucide-react';
-import { calcularPercentuais } from '@/utils/format';
 import type { ResultadoDto } from '@/types/pauta';
+import { calcularPercentuais } from '@/utils/votacao';
 
 interface ApuracaoCardProps {
     resultado: ResultadoDto | null;

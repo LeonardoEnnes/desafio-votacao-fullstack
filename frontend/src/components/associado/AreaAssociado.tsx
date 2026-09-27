@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { IdCard, UserCheck } from 'lucide-react';
-import { mascararCpf } from '@/utils/format';
+import { mascararCpf } from '@/utils/cpf';
 import { useIdentificarAssociado } from '@/hooks/useIdentificarAssociado';
 
 export function AreaAssociado() {

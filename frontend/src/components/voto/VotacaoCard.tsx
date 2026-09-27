@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { pautaService } from '@/services/pautaService';
 import { votoService } from '@/services/votoService';
 import { getApiErrorMessage } from '@/utils/errorMessages';
-import { formatarData } from '@/utils/format';
+import { formatarData } from '@/utils/date';
 import { useAuthStore } from '@/stores/authStore';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
