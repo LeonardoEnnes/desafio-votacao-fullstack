@@ -42,17 +42,17 @@ export function VotacaoCard({ pauta, sessaoAberta, onVotoRealizado }: PautaVotac
         setJaVotou(localStorage.getItem(CHAVE_JA_VOTOU) === 'true');
     }, [cpfLogado, CHAVE_JA_VOTOU]);
 
-    const carregarResultado = async () => {
-        try {
-            const res = await pautaService.obterResultado(pauta.id);
-            if (res) setResultado(res);
-        } catch {
-            // Silencia caso não tenha votos
-        }
-    };
-
     useEffect(() => {
-        carregarResultado();
+        const buscarResultado = async () => {
+            try {
+                const res = await pautaService.obterResultado(pauta.id);
+                if (res) setResultado(res);
+            } catch {
+                // Silencia caso não tenha votos
+            }
+        };
+
+        buscarResultado();
     }, [pauta.id]);
 
     const handleVotar = async (opcao: 'SIM' | 'NAO') => {
@@ -67,7 +67,9 @@ export function VotacaoCard({ pauta, sessaoAberta, onVotoRealizado }: PautaVotac
             setJaVotou(true);
             setFeedback({ tipo: 'sucesso', texto: `Voto "${opcao}" registrado com sucesso!` });
 
-            await carregarResultado();
+            const res = await pautaService.obterResultado(pauta.id);
+            if (res) setResultado(res);
+
             onVotoRealizado();
         } catch (error: any) {
             const status = error.response?.status;
@@ -75,7 +77,6 @@ export function VotacaoCard({ pauta, sessaoAberta, onVotoRealizado }: PautaVotac
             const mensagem = getApiErrorMessage(status, 'Erro ao registrar voto.', error.response?.data);
 
             if (status === 409) {
-                // se ja votou n pode votar novamente
                 localStorage.setItem(CHAVE_JA_VOTOU, 'true');
                 setJaVotou(true);
                 setFeedback({ tipo: 'aviso', texto: mensagem });
