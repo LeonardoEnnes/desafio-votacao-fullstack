@@ -35,8 +35,17 @@ export function usePautaDetalhe(id?: string) {
                 const sessoes = await pautaService.listarSessoesAbertas().catch(() => []);
                 setSessaoAberta(sessoes.some((s) => s.pautaId === id));
             }
-        } catch (error) {
-            console.error('Erro ao carregar pauta:', error);
+        } catch (error: any) {
+            const status = error.response?.status;
+            if (status === 409) setJaTeveSessao(true);
+            setFeedback({
+                tipo: 'erro',
+                texto: getApiErrorMessage(
+                    status,
+                    'Erro ao abrir sessão.',
+                    error.response?.data
+                ),
+            });
         } finally {
             setLoading(false);
         }
@@ -85,9 +94,13 @@ export function usePautaDetalhe(id?: string) {
             await carregarDados();
         } catch (error: any) {
             setFeedback({
-                tipo: 'erro',
-                texto: getApiErrorMessage(error.response?.status, 'Erro ao registrar voto.'),
-            });
+            tipo: 'erro',
+            texto: getApiErrorMessage(
+                error.response?.status,
+                'Erro ao registrar voto.',
+                error.response?.data
+            ),
+        });
         } finally {
             setVotando(false);
         }

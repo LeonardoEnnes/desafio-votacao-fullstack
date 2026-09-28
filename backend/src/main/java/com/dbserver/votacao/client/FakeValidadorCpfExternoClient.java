@@ -22,7 +22,7 @@ public class FakeValidadorCpfExternoClient implements ValidadorCpfExternoClient 
         if (isPerf) {
             this.resultadoElegibilidade = () -> true; // para deixar 100% dos cps elegiveis nos testes de performance
         } else {
-            this.resultadoElegibilidade = () -> ThreadLocalRandom.current().nextBoolean();
+            this.resultadoElegibilidade = () -> ThreadLocalRandom.current().nextBoolean(); // tem 50% de chance de ser elegível ou nao
         }
     }
 

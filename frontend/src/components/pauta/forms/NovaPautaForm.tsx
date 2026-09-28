@@ -5,6 +5,7 @@ import { pautaSchema, type PautaFormData } from '@/schemas/pautaSchema';
 import { pautaService } from '@/services/pautaService';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { getApiErrorMessage } from '@/utils/errorMessages';
 
 interface NovaPautaFormProps {
     onSuccess: () => void;
@@ -24,20 +25,26 @@ export function NovaPautaForm({ onSuccess, onCancel }: NovaPautaFormProps) {
     });
 
     async function onSubmit(data: PautaFormData) {
-        setErro('');
-        try {
-            setLoading(true);
-            await pautaService.criarPauta({
-                titulo: data.titulo,
-                descricao: data.descricao?.trim() || undefined,
-            });
-            onSuccess();
-        } catch (error: any) {
-            setErro(error.response?.data?.message ?? 'Erro ao criar pauta.');
-        } finally {
-            setLoading(false);
-        }
+    setErro('');
+    try {
+        setLoading(true);
+        await pautaService.criarPauta({
+            titulo: data.titulo,
+            descricao: data.descricao?.trim() || undefined,
+        });
+        onSuccess();
+    } catch (error: any) {
+        setErro(
+            getApiErrorMessage(
+                error.response?.status,
+                'Erro ao criar pauta.',
+                error.response?.data
+            )
+        );
+    } finally {
+        setLoading(false);
     }
+}
 
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -60,7 +67,7 @@ export function NovaPautaForm({ onSuccess, onCancel }: NovaPautaFormProps) {
 
             <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Descrição (Opcional)
+                    Descrição *
                 </label>
                 <textarea
                     {...register('descricao')}
@@ -68,6 +75,11 @@ export function NovaPautaForm({ onSuccess, onCancel }: NovaPautaFormProps) {
                     disabled={loading}
                     className="w-full border border-slate-300 rounded-md p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600 min-h-[90px] disabled:opacity-50"
                 />
+                {errors.descricao && (
+                    <span className="text-xs text-rose-600 font-medium mt-1 block">
+                        {errors.descricao.message}
+                    </span>
+                )}
             </div>
 
             {erro && (
