@@ -16,6 +16,11 @@ export const useAuthStore = create<AuthState>((set) => ({
     },
     logout: () => {
         localStorage.removeItem(STORAGE_KEY);
+        
+        Object.keys(localStorage)
+            .filter((k) => k.startsWith('voto_') || k.startsWith('inapto_'))
+            .forEach((k) => localStorage.removeItem(k));
+
         set({ cpfLogado: null });
     }
 }));
