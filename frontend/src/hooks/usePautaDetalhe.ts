@@ -70,7 +70,11 @@ export function usePautaDetalhe(id?: string) {
             if (status === 409) setJaTeveSessao(true);
             setFeedback({
                 tipo: 'erro',
-                texto: getApiErrorMessage(status, 'Erro ao abrir sessão.'),
+                texto: getApiErrorMessage(
+                    status,
+                    'Erro ao abrir sessão.',
+                    error.response?.data
+                ),
             });
         } finally {
             setAbrindo(false);
@@ -94,13 +98,13 @@ export function usePautaDetalhe(id?: string) {
             await carregarDados();
         } catch (error: any) {
             setFeedback({
-            tipo: 'erro',
-            texto: getApiErrorMessage(
-                error.response?.status,
-                'Erro ao registrar voto.',
-                error.response?.data
-            ),
-        });
+                tipo: 'erro',
+                texto: getApiErrorMessage(
+                    error.response?.status,
+                    'Erro ao registrar voto.',
+                    error.response?.data
+                ),
+            });
         } finally {
             setVotando(false);
         }
