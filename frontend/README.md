@@ -4,7 +4,7 @@ Interface web do sistema de votação para assembleias cooperativas. Consome a A
 
 ---
 
-## 📖 Visão Geral
+## Visão Geral
 
 O frontend foi construído como uma **SPA** com React + TypeScript
 
@@ -84,7 +84,10 @@ pnpm install
 
 ### Variaveis de Ambiente
 
-Crie um arquivo `.env` na raiz do `frontend`:
+```env
+cp .env.example .env
+```
+Altere a variavel de ambiente:
 
 ```env
 VITE_API_URL=http://localhost:8080/api/v1
@@ -102,13 +105,15 @@ pnpm run dev
 
 ### Via Docker
 
-O `docker-compose.yml` na raiz já orquestra frontend + backend + banco:
+Caso não queria rodar localmente é possivel rodar pelo docker. O `docker-compose.yml` na raiz já orquestra frontend + backend + banco:
 
 ```bash
 docker-compose up --build
 ```
 
 Acesse: `http://localhost:3000`
+
+Não esqueça de fazer o processo da variavel de ambiente
 
 ---
 
@@ -130,7 +135,7 @@ pnpm lint
 ```
 ---
 
-## 🔄 Fluxo da Aplicação
+## Fluxo da Aplicação
 
 ### 1. Identificação do Associado
 - Usuário informa CPF na **Área do Associado**
@@ -147,9 +152,6 @@ pnpm lint
 - Usuário clica em **SIM** ou **NÃO**
 - `votoService.registrarVoto()` chama `POST /pautas/{id}/votos`
 - **Sucesso** → badge "Você já votou" persistida no localStorage
-- **409** → idem (backend já registrou)
-- **422** → feedback temporário (CPF inapto)
-- **400** → mensagem exata do backend
 
 ### 4. Detalhe da Pauta (`PautaPage`)
 - `usePautaDetalhe` busca pauta + resultado + sessões
@@ -160,6 +162,5 @@ pnpm lint
 ### 5. Abrir Sessão
 - Usuário define minutos e clica em "Abrir Sessão"
 - `POST /pautas/{id}/sessoes`
-- **409** → avisa que já existe sessão para a pauta
 
 ---
