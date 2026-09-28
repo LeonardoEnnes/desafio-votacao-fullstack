@@ -75,7 +75,7 @@ export function NovaPautaForm({ onSuccess, onCancel }: NovaPautaFormProps) {
                     {...register('descricao')}
                     placeholder="Detalhes adicionais sobre a pauta..."
                     disabled={loading}
-                    className="..."
+                    className="flex min-h-[120px] w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 resize-y"
                 />
                 {errors.descricao && (
                     <span className="text-xs text-rose-600 font-medium mt-1 block">
