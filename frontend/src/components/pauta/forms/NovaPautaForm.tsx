@@ -49,10 +49,11 @@ export function NovaPautaForm({ onSuccess, onCancel }: NovaPautaFormProps) {
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
+                <label htmlFor="titulo" className="block text-sm font-medium text-slate-700 mb-1">
                     Título da Pauta *
                 </label>
                 <Input
+                    id="titulo"
                     {...register('titulo')}
                     placeholder="Ex: Aprovação de contas anuais"
                     disabled={loading}
@@ -66,14 +67,15 @@ export function NovaPautaForm({ onSuccess, onCancel }: NovaPautaFormProps) {
             </div>
 
             <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
+                <label htmlFor="descricao" className="block text-sm font-medium text-slate-700 mb-1">
                     Descrição *
                 </label>
                 <textarea
+                    id="descricao"
                     {...register('descricao')}
                     placeholder="Detalhes adicionais sobre a pauta..."
                     disabled={loading}
-                    className="w-full border border-slate-300 rounded-md p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600 min-h-[90px] disabled:opacity-50"
+                    className="..."
                 />
                 {errors.descricao && (
                     <span className="text-xs text-rose-600 font-medium mt-1 block">
