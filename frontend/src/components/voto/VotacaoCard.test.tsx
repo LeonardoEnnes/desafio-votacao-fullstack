@@ -20,8 +20,8 @@ const pautaMock = {
     dataCriacao: '2026-09-28T10:00:00',
 };
 
-function renderCard(sessaoAberta = true) {
-    return render(
+async function renderCard(sessaoAberta = true) {
+    const utils = render(
         <MemoryRouter>
             <VotacaoCard
                 pauta={pautaMock}
@@ -30,6 +30,12 @@ function renderCard(sessaoAberta = true) {
             />
         </MemoryRouter>
     );
+
+    await waitFor(() => {
+        expect(pautaService.obterResultado).toHaveBeenCalled();
+    });
+
+    return utils;
 }
 
 describe('VotacaoCard', () => {
