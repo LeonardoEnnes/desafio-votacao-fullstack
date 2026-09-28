@@ -45,14 +45,14 @@ class AssociadoControllerTest {
     @Test
     @DisplayName("deve cadastrar associado com sucesso")
     void deveCadastrarAssociado() throws Exception {
-        AssociadoRequestDto request =
-                new AssociadoRequestDto("12345678901");
+        String cpfValido = "11144477735";
+        AssociadoRequestDto request = new AssociadoRequestDto(cpfValido);
 
         mockMvc.perform(post("/api/v1/associados")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(associadoRequestTester.write(request).getJson()))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.cpf").value("12345678901"))
+                .andExpect(jsonPath("$.cpf").value(cpfValido))
                 .andExpect(jsonPath("$.uuid").isString())
                 .andExpect(jsonPath("$.uuid").isNotEmpty());
 
@@ -62,25 +62,22 @@ class AssociadoControllerTest {
     @Test
     @DisplayName("não deve criar associado quando CPF já estiver cadastrado")
     void naoDeveCriarAssociadoCpfDuplicado() throws Exception {
+        String cpfValido = "11144477735";
+
         associadoRepository.save(
-                Associado.builder()
-                        .cpf("12345678901")
-                        .build()
+                Associado.builder().cpf(cpfValido).build()
         );
 
-        AssociadoRequestDto request =
-                new AssociadoRequestDto("12345678901");
+        AssociadoRequestDto request = new AssociadoRequestDto(cpfValido);
 
         mockMvc.perform(post("/api/v1/associados")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(associadoRequestTester.write(request).getJson()))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.message")
-                        .value("Associado já cadastrado com este CPF."));
+                .andExpect(jsonPath("$.message").value("Associado já cadastrado com este CPF."));
 
         assertEquals(1, associadoRepository.count());
     }
-
 
     @Test
     @DisplayName("deve retornar 400 Bad Request se CPF for invalido")
@@ -91,7 +88,7 @@ class AssociadoControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(associadoRequestTester.write(request).getJson()))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.messages.cpf").exists())
+                .andExpect(jsonPath("$.campos.cpf").exists())
                 .andDo(print());
     }
 
@@ -105,7 +102,7 @@ class AssociadoControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(associadoRequestTester.write(request).getJson()))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.messages.cpf").exists());
+                .andExpect(jsonPath("$.campos.cpf").exists());
     }
 
     @Test
@@ -117,7 +114,7 @@ class AssociadoControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(associadoRequestTester.write(request).getJson()))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.messages.cpf").exists());
+                .andExpect(jsonPath("$.campos.cpf").exists());
     }
 
     @Test
@@ -129,7 +126,7 @@ class AssociadoControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(associadoRequestTester.write(request).getJson()))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.messages.cpf").exists());
+                .andExpect(jsonPath("$.campos.cpf").exists());
     }
 
     @Test
@@ -145,7 +142,7 @@ class AssociadoControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.messages.cpf").exists());
+                .andExpect(jsonPath("$.campos.cpf").exists());
     }
 
     @Test
@@ -158,7 +155,7 @@ class AssociadoControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(associadoRequestTester.write(request).getJson()))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.messages.cpf").exists());
+                .andExpect(jsonPath("$.campos.cpf").exists());
     }
 
     @Test
@@ -195,7 +192,7 @@ class AssociadoControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.messages.cpf").exists());
+                .andExpect(jsonPath("$.campos.cpf").exists());
     }
 
     @Test
@@ -208,7 +205,7 @@ class AssociadoControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(associadoRequestTester.write(request).getJson()))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.messages.cpf").exists());
+                .andExpect(jsonPath("$.campos.cpf").exists());
     }
 
 }

@@ -9,6 +9,9 @@ import com.dbserver.votacao.domain.Voto;
 import com.dbserver.votacao.domain.enums.VotoEnum;
 import com.dbserver.votacao.dto.request.VotoRequestDto;
 import com.dbserver.votacao.dto.response.VotoResponseDto;
+import com.dbserver.votacao.exception.ConflitoException;
+import com.dbserver.votacao.exception.InabilitadoException;
+import com.dbserver.votacao.exception.RegraDeNegocioException;
 import com.dbserver.votacao.repository.SessaoRepository;
 import com.dbserver.votacao.repository.VotoRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -87,7 +90,7 @@ class VotoServiceTest {
         when(pautaService.buscarPorId(pautaId)).thenReturn(pauta);
         when(sessaoRepository.findByPautaId(pautaId)).thenReturn(Optional.of(sessao));
 
-        IllegalStateException ex = assertThrows(IllegalStateException.class, () -> votoService.registrarVoto(pautaId, dto));
+        RegraDeNegocioException ex = assertThrows(RegraDeNegocioException .class, () -> votoService.registrarVoto(pautaId, dto));
         assertEquals("A sessão de votação já está encerrada.", ex.getMessage());
         verify(votoRepository, never()).save(any());
     }
@@ -110,7 +113,7 @@ class VotoServiceTest {
 
         when(votoRepository.saveAndFlush(any(Voto.class))).thenThrow(new DataIntegrityViolationException("uk_associado_pauta"));
 
-        IllegalStateException ex = assertThrows(IllegalStateException.class, () -> votoService.registrarVoto(pautaId, dto));
+        ConflitoException ex = assertThrows(ConflitoException .class, () -> votoService.registrarVoto(pautaId, dto));
         assertEquals("O associado já votou nesta pauta.", ex.getMessage());
     }
 
@@ -129,8 +132,11 @@ class VotoServiceTest {
 
         when(validadorCpfExternoClient.verificarElegibilidade(cpf)).thenReturn(ElegibilidadeVoto.UNABLE_TO_VOTE);
 
-        IllegalStateException ex = assertThrows(IllegalStateException.class, () -> votoService.registrarVoto(pautaId, dto));
-        assertTrue(ex.getMessage().contains("UNABLE_TO_VOTE"));
+        InabilitadoException ex = assertThrows(InabilitadoException.class,
+                () -> votoService.registrarVoto(pautaId, dto));
+
+        assertEquals("O associado não está apto a votar nesta pauta.", ex.getMessage());
+
         verify(votoRepository, never()).save(any());
         verify(associadoService, never()).buscarPorCpf(anyString());
     }
@@ -147,7 +153,8 @@ class VotoServiceTest {
         when(pautaService.buscarPorId(pautaId)).thenReturn(pauta);
         when(sessaoRepository.findByPautaId(pautaId)).thenReturn(Optional.empty());
 
-        IllegalStateException ex = assertThrows(IllegalStateException.class, () -> votoService.registrarVoto(pautaId, dto));
+        RegraDeNegocioException ex = assertThrows(RegraDeNegocioException.class,
+                () -> votoService.registrarVoto(pautaId, dto));
 
         assertEquals("Não existe sessão de votação aberta para esta pauta.", ex.getMessage());
         verify(pautaService, times(1)).buscarPorId(pautaId);

@@ -70,13 +70,13 @@ public class PautaServiceTest {
     @Test
     @DisplayName("deve retornar lista vazia quando nao tiver pautas no banco de dados")
     void deveRetornarListaVaziaQuandoNaoExistirPautas() {
-        when(pautaRepository.findAll()).thenReturn(java.util.Collections.emptyList());
+        when(pautaRepository.findAllByOrderByDataCriacaoDesc()).thenReturn(java.util.Collections.emptyList());
 
         List<PautaResponseDto> response = pautaService.listarPautas();
 
         assertNotNull(response);
         assertTrue(response.isEmpty());
-        verify(pautaRepository, times(1)).findAll();
+        verify(pautaRepository, times(1)).findAllByOrderByDataCriacaoDesc();
     }
 
     @Test
@@ -145,8 +145,7 @@ public class PautaServiceTest {
                 .descricao("Descrição 2")
                 .build();
 
-        when(pautaRepository.findAll())
-                .thenReturn(List.of(pauta1, pauta2));
+        when(pautaRepository.findAllByOrderByDataCriacaoDesc()).thenReturn(List.of(pauta1, pauta2));
 
         List<PautaResponseDto> response =
                 pautaService.listarPautas();
@@ -160,8 +159,7 @@ public class PautaServiceTest {
         assertEquals(pauta2.getId(), response.get(1).id());
         assertEquals(pauta2.getTitulo(), response.get(1).titulo());
 
-        verify(pautaRepository, times(1))
-                .findAll();
+        verify(pautaRepository, times(1)).findAllByOrderByDataCriacaoDesc();
     }
 
     @Test

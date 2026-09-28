@@ -138,7 +138,7 @@ class VotoControllerTest {
                 .andExpect(jsonPath("$.message")
                         .value("O associado já votou nesta pauta."));
     }
-
+    
     @Test
     @DisplayName("Deve retornar 400 se CPF for invalido")
     void deveRetornarBadRequestCpfInvalido() throws Exception {
@@ -148,7 +148,7 @@ class VotoControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(votoRequestTester.write(request).getJson()))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.messages.associadoCpf").exists());
+                .andExpect(jsonPath("$.campos.associadoCpf").exists());
     }
 
     @Test
@@ -212,19 +212,20 @@ class VotoControllerTest {
     }
 
     @Test
-    @DisplayName("deve retornar 409 quando CPF não estiver apto a votar")
-    void deveRetornarConflictCpfInapto() throws Exception {
+    @DisplayName("deve retornar 422 quando CPF não estiver apto a votar")
+    void deveRetornarUnprocessableCpfInapto() throws Exception {
 
         when(validadorCpfExternoClient.verificarElegibilidade("52998224725"))
                 .thenReturn(ElegibilidadeVoto.UNABLE_TO_VOTE);
 
-        VotoRequestDto request =
-                new VotoRequestDto("52998224725", VotoEnum.SIM);
+        VotoRequestDto request = new VotoRequestDto("52998224725", VotoEnum.SIM);
 
         mockMvc.perform(post("/api/v1/pautas/{pautaId}/votos", pautaAtiva.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(votoRequestTester.write(request).getJson()))
-                .andExpect(status().isConflict());
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.message")
+                        .value("O associado não está apto a votar nesta pauta."));
     }
 
     @Test
@@ -244,7 +245,7 @@ class VotoControllerTest {
         mockMvc.perform(post("/api/v1/pautas/{pautaId}/votos", pautaAtiva.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(votoRequestTester.write(request).getJson()))
-                .andExpect(status().isConflict());
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -261,7 +262,7 @@ class VotoControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.messages.associadoCpf").exists());
+                .andExpect(jsonPath("$.campos.associadoCpf").exists());
     }
 
 }

@@ -1,8 +1,11 @@
 package com.dbserver.votacao.service;
 
+import com.dbserver.votacao.client.ValidadorDeCpf;
 import com.dbserver.votacao.domain.Associado;
 import com.dbserver.votacao.dto.request.AssociadoRequestDto;
 import com.dbserver.votacao.dto.response.AssociadoResponseDto;
+import com.dbserver.votacao.exception.ConflitoException;
+import com.dbserver.votacao.exception.RegraDeNegocioException;
 import com.dbserver.votacao.exception.ResourceNotFoundException;
 import com.dbserver.votacao.repository.AssociadoRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -30,10 +33,14 @@ class AssociadoServiceTest {
     @InjectMocks
     private AssociadoService associadoService;
 
+    @Mock
+    private ValidadorDeCpf validadorDeCpf;
+
     @Test
     @DisplayName("Deve cadastrar um associado com sucesso")
     void deveCadastrarNovoAssociado() {
         AssociadoRequestDto dto = new AssociadoRequestDto("12345678901");
+        when(validadorDeCpf.isValido(dto.cpf())).thenReturn(true);
 
         Associado associadoSalvo = Associado.builder()
                 .id(UUID.randomUUID())
@@ -63,6 +70,8 @@ class AssociadoServiceTest {
     @DisplayName("Deve cadastrar associado utilizando o CPF informado no DTO")
     void deveCadastrarAssociadoComCpfInformado() {
         AssociadoRequestDto dto = new AssociadoRequestDto("12345678901");
+
+        when(validadorDeCpf.isValido(dto.cpf())).thenReturn(true);
 
         Associado associadoSalvo = Associado.builder()
                 .id(UUID.randomUUID())
@@ -94,6 +103,8 @@ class AssociadoServiceTest {
         AssociadoRequestDto dto =
                 new AssociadoRequestDto("12345678901");
 
+        when(validadorDeCpf.isValido(dto.cpf())).thenReturn(true);
+
         Associado existente = Associado.builder()
                 .id(UUID.randomUUID())
                 .cpf(dto.cpf())
@@ -102,8 +113,8 @@ class AssociadoServiceTest {
         when(associadoRepository.findByCpf(dto.cpf()))
                 .thenReturn(Optional.of(existente));
 
-        IllegalStateException exception = assertThrows(
-                IllegalStateException.class,
+        ConflitoException exception = assertThrows(
+                ConflitoException.class,
                 () -> associadoService.cadastrarAssociado(dto)
         );
 
@@ -120,10 +131,26 @@ class AssociadoServiceTest {
     }
 
     @Test
+    @DisplayName("Deve lançar RegraDeNegocioException quando CPF for inválido")
+    void deveLancarExcecaoQuandoCpfInvalido() {
+        AssociadoRequestDto dto = new AssociadoRequestDto("00000000000");
+        when(validadorDeCpf.isValido(dto.cpf())).thenReturn(false);
+
+        RegraDeNegocioException ex = assertThrows(
+                RegraDeNegocioException.class,
+                () -> associadoService.cadastrarAssociado(dto)
+        );
+        assertEquals("CPF inválido.", ex.getMessage());
+        verify(associadoRepository, never()).save(any());
+    }
+
+    @Test
     @DisplayName("Deve propagar DataIntegrityViolationException ao salvar")
     void devePropagarExcecaoDeIntegridadeAoSalvar() {
         AssociadoRequestDto dto =
                 new AssociadoRequestDto("12345678901");
+
+        when(validadorDeCpf.isValido(dto.cpf())).thenReturn(true);
 
         when(associadoRepository.findByCpf(dto.cpf()))
                 .thenReturn(Optional.empty());

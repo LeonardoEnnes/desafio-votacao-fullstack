@@ -4,6 +4,7 @@ import com.dbserver.votacao.domain.Pauta;
 import com.dbserver.votacao.domain.Sessao;
 import com.dbserver.votacao.dto.request.SessaoRequestDto;
 import com.dbserver.votacao.dto.response.SessaoResponseDto;
+import com.dbserver.votacao.exception.ConflitoException;
 import com.dbserver.votacao.repository.SessaoRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -119,7 +120,7 @@ class SessaoServiceTest {
         // true se a sessao já existir
         when(sessaoRepository.existsByPautaId(pautaId)).thenReturn(true);
 
-        assertThrows(IllegalStateException.class, () -> {
+        assertThrows(ConflitoException.class, () -> {
             sessaoService.abrirSessao(pautaId, requestDto);
         });
 
@@ -288,12 +289,9 @@ class SessaoServiceTest {
         when(pautaService.buscarPorId(pautaId)).thenReturn(pauta);
         when(sessaoRepository.existsByPautaId(pautaId)).thenReturn(true);
 
-        IllegalStateException exception = assertThrows(
-                IllegalStateException.class,
-                () -> sessaoService.abrirSessao(
-                        pautaId,
-                        requestDto
-                )
+        ConflitoException exception = assertThrows(
+                ConflitoException.class,
+                () -> sessaoService.abrirSessao(pautaId, requestDto)
         );
 
         assertEquals(
