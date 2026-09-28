@@ -4,6 +4,7 @@ import com.dbserver.votacao.domain.Pauta;
 import com.dbserver.votacao.domain.Sessao;
 import com.dbserver.votacao.dto.request.SessaoRequestDto;
 import com.dbserver.votacao.dto.response.SessaoResponseDto;
+import com.dbserver.votacao.exception.ConflitoException;
 import com.dbserver.votacao.repository.SessaoRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,7 +31,7 @@ public class SessaoService {
         // validando se ja tem sessao aberta para a pauta
         if (sessaoRepository.existsByPautaId(pautaId)) {
             log.warn("tentativa de abrir sessao falhou: Ja existe sessao para a pauta ID: {}", pautaId);
-            throw new IllegalStateException("Já existe uma sessão de votação cadastrada para esta pauta.");
+            throw new ConflitoException("Já existe uma sessão de votação cadastrada para esta pauta.");
         }
 
         int minutos = Optional.ofNullable(sessaoRequestDto)

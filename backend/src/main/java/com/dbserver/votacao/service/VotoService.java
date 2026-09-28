@@ -8,6 +8,9 @@ import com.dbserver.votacao.domain.Sessao;
 import com.dbserver.votacao.domain.Voto;
 import com.dbserver.votacao.dto.request.VotoRequestDto;
 import com.dbserver.votacao.dto.response.VotoResponseDto;
+import com.dbserver.votacao.exception.ConflitoException;
+import com.dbserver.votacao.exception.InabilitadoException;
+import com.dbserver.votacao.exception.RegraDeNegocioException;
 import com.dbserver.votacao.repository.SessaoRepository;
 import com.dbserver.votacao.repository.VotoRepository;
 import lombok.RequiredArgsConstructor;
@@ -36,16 +39,16 @@ public class VotoService {
         Sessao sessao = sessaoRepository.findByPautaId(pautaId)
                 .orElseThrow(() -> {
                     log.warn("Voto negado: Nenhuma sessão aberta para a pauta ID: {}", pautaId);
-                    return new IllegalStateException("Não existe sessão de votação aberta para esta pauta.");
+                    throw new RegraDeNegocioException("Não existe sessão de votação aberta para esta pauta.");
                 });
 
         if (LocalDateTime.now().isAfter(sessao.getDataFechamento())) {
-            throw new IllegalStateException("A sessão de votação já está encerrada.");
+            throw new RegraDeNegocioException("A sessão de votação já está encerrada.");
         }
 
         ElegibilidadeVoto elegibilidade = validadorCpfExternoClient.verificarElegibilidade(dto.associadoCpf());
         if (elegibilidade == ElegibilidadeVoto.UNABLE_TO_VOTE) {
-            throw new IllegalStateException("O associado não está apto a votar nesta pauta (UNABLE_TO_VOTE).");
+            throw new InabilitadoException("O associado não está apto a votar nesta pauta.");
         }
 
         Associado associado = associadoService.buscarPorCpf(dto.associadoCpf());
@@ -63,7 +66,7 @@ public class VotoService {
 
         } catch (DataIntegrityViolationException e) {
             log.warn("Voto negado por duplicidade estrutural (Constraint): Associado ID {} já votou na pauta ID: {}", associado.getId(), pautaId);
-            throw new IllegalStateException("O associado já votou nesta pauta.");
+            throw new ConflitoException("O associado já votou nesta pauta.");
         }
     }
 }

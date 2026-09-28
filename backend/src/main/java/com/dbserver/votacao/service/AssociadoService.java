@@ -4,6 +4,8 @@ import com.dbserver.votacao.client.ValidadorDeCpf;
 import com.dbserver.votacao.domain.Associado;
 import com.dbserver.votacao.dto.request.AssociadoRequestDto;
 import com.dbserver.votacao.dto.response.AssociadoResponseDto;
+import com.dbserver.votacao.exception.ConflitoException;
+import com.dbserver.votacao.exception.RegraDeNegocioException;
 import com.dbserver.votacao.exception.ResourceNotFoundException;
 import com.dbserver.votacao.repository.AssociadoRepository;
 import lombok.RequiredArgsConstructor;
@@ -22,12 +24,12 @@ public class AssociadoService {
     public AssociadoResponseDto cadastrarAssociado(AssociadoRequestDto associadoRequestDto) {
         if (!validadorDeCpf.isValido(associadoRequestDto.cpf())) {
             log.warn("tentativa de cadastro falhou: CPF inválido informado: {}", associadoRequestDto.cpf());
-            throw new IllegalArgumentException("CPF inválido.");
+            throw new RegraDeNegocioException("CPF inválido.");
         }
 
         if (associadoRepository.findByCpf(associadoRequestDto.cpf()).isPresent()) {
             log.warn("tentativa de cadastro falhou: Associado ja existe com o CPF informado.");
-            throw new IllegalStateException("Associado já cadastrado com este CPF.");
+            throw new ConflitoException("Associado já cadastrado com este CPF.");
         }
 
         Associado associado = Associado.builder()
