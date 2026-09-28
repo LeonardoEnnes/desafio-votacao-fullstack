@@ -7,6 +7,7 @@ Para rodar os testes de carga com o perfil de performance (`perf`) e o banco de 
    ```bash
    # SPRING_PROFILES_ACTIVE: perf
    ```
+   isso e feito para tirar a roleta russa do validador do cpf
 
 2. **Bombardear a API com Votos :**
 
