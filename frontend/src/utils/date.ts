@@ -40,10 +40,16 @@ export function parseDataApi(raw?: string | number[] | Date | null): Date | null
 }
 
 export function formatarData(raw?: string | number[] | Date | null): string | null {
-    const data = parseDataApi(raw);
-    if (!data) return null;
+    const parsed = parseDataApi(raw);
+    if (!parsed) return null;
+
+    const data = new Date(parsed.getTime());
 
     try {
+        if (data.getSeconds() > 0 || data.getMilliseconds() > 0) {
+            data.setMinutes(data.getMinutes() + 1);
+        }
+
         return new Intl.DateTimeFormat('pt-BR', {
             dateStyle: 'short',
             timeStyle: 'short',

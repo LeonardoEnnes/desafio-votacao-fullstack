@@ -16,7 +16,7 @@ public class Pauta {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id; // evitando o Enumeration Attack
+    private UUID id;
 
     @Column(nullable = false)
     private String titulo;
