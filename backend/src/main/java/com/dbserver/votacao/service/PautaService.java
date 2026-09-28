@@ -38,7 +38,7 @@ public class PautaService {
 
     @Transactional(readOnly = true)
     public List<PautaResponseDto> listarPautas() {
-        return pautaRepository.findAll()
+        return pautaRepository.findAllByOrderByDataCriacaoDesc()
                 .stream()
                 .map(PautaResponseDto::fromEntity)
                 .toList();

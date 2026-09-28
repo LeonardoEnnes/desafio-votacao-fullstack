@@ -16,7 +16,14 @@ export function usePautasComSessoes() {
                 pautaService.listarPautas(),
                 pautaService.listarSessoesAbertas().catch(() => []),
             ]);
-            setPautas(pautasData);
+
+            const pautasOrdenadas = pautasData.sort((a, b) => {
+                const dataA = new Date(a.dataCriacao || 0).getTime();
+                const dataB = new Date(b.dataCriacao || 0).getTime();
+                return dataB - dataA;
+            });
+
+            setPautas(pautasOrdenadas);
             setSessoesAbertasIds(sessoesData.map((s) => s.pautaId));
         } catch (e) {
             console.error('Erro ao buscar dados:', e);
