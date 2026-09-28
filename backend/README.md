@@ -11,7 +11,7 @@ A aplicação atende a todos os requisitos fundamentais do domínio de assemblei
 * **Criação de Pautas:** Cadastro de novos tópicos para votação.
 * **Sessão de Votação:** Abertura de prazos para votação (configurável ou 1 min por padrão).
 * **Registro de Votos:** Votos em "Sim" ou "Não", com garantia de unicidade (1 voto por associado/pauta).
-* **Apuração de Resultados:** Contagem e consolidação em tempo real dos votos computados.
+* **Apuração de Resultados:** Contagem e consolidação dos votos computados.
 
 
 ### Rotas Disponíveis
@@ -40,7 +40,7 @@ O projeto é estruturado com base em **Clean Architecture**, dividindo responsab
 * O Flyway versiona o esquema do PostgreSQL e os volumes Docker preservam os dados entre reinicializações.
 * Uma restrição única composta (`UniqueConstraint`) impede que o mesmo associado vote mais de uma vez na mesma pauta.
 * A apuração utiliza consultas agregadas no banco (`COUNT`), sem carregar todos os votos em memória (*Heap*).
-* A elegibilidade valida o CPF por Módulo 11 via *client* simulado, retornando erros adequados (404/409) em caso de falha.
+* A elegibilidade valida o CPF via *client* simulado
 * Testes E2E com Testcontainers validam o fluxo em um PostgreSQL real, complementados por testes de carga (k6) e cobertura (JaCoCo).
 * Versionamento `/api/v1`, contratos via DTOs e logs estruturados.
 
@@ -53,8 +53,8 @@ O projeto é estruturado com base em **Clean Architecture**, dividindo responsab
 * PostgreSQL e H2
 * Flyway
 * JUnit 5 / MockMvc: Testes unitários e de integração
-* Testcontainers: Testes E2E rodando contra uma instância Docker real de PostgreSQL
-* JaCoCo: Relatórios de cobertura de código (~90%+)
+* Testcontainers
+* JaCoCo
 * k6: Testes de carga, stress e validação de concorrência
 * Swagger
 * Docker & Docker Compose
@@ -69,15 +69,10 @@ O projeto é estruturado com base em **Clean Architecture**, dividindo responsab
 * *Opcional:* Java 21 e Maven (se preferir rodar localmente fora do Docker).
 
 ### 1. Rodando com Docker Compose (Recomendado)
-A maneira mais fácil e segura de iniciar a aplicação junto com o banco de dados PostgreSQL.
 
 ```bash
-# Clone o repo
-git clone https://github.com/LeonardoEnnes/desafio-votacao-fullstack.git
 
-cd backend
-
-# Suba a aplicacao
+# acesse a raiz do projeto e Suba a aplicacao
 docker compose up --build -d
 ```
 A API estará acessível em http://localhost:8080.
@@ -100,18 +95,13 @@ mvn clean test
 ```
 O relatório interativo estará em: target/site/jacoco/index.html
 
-### Teste de Carga e Estresse (k6)
+### Testes de Carga e Estresse (k6)
 
-a raiz do repositório inclui o script `load-test.js`, escrito em **k6**.
+O projeto possui cenários automatizados de teste de performance escritos em **k6** para validar o comportamento da API sob alta concorrência (como centenas de votos simultâneos).
 
-O teste simula o estresse de concorrência com **50 usuários virtuais concorrentes**, gerando CPFs válidos e bombardeando a API com requisições
+Os scripts estão localizados na pasta `backend/performance/`:
+* `voto-load-test.js`: Simula o cadastro massivo de associados e o envio concorrente de milhares de votos.
+* `resultados-load-test.js`: Testa a performance de leitura e apuração dos resultados das pautas.
 
-Para executar o teste de estresse, com a aplicação iniciada:
-
-```bash
-# Necessário ter o k6 instalado na máquina
-sudo apt install k6
-
-# Executar o teste
-k6 run load-test.js
-```
+Para instruções detalhadas de como rodar os testes utilizando o perfil isolado de performance no Docker Compose:
+**[PERFORMANCE.md](./PERFORMANCE.md)**
